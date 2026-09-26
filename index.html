@@ -1,281 +1,1075 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>バスケットボール練習アプリ</title>
-  <link rel="manifest" href="./manifest.json">
-  <meta name="theme-color" content="#2563eb">
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    body { -webkit-tap-highlight-color: transparent; }
-    .active-tab { border-b-2 border-blue-600 text-blue-600 font-bold; }
-  </style>
-</head>
-<body class="bg-gray-100 text-gray-800 min-h-screen pb-20">
-
-  <!-- ヘッダー -->
-  <header class="bg-white border-b border-gray-200 p-4 sticky top-0 z-10 flex justify-between items-center shadow-sm">
-    <h1 class="text-xl font-bold text-blue-600">🏀 バスケ練習ノート</h1>
-    <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">プロトタイプ</span>
-  </header>
-
-  <!-- タブナビゲーション -->
-  <nav class="flex bg-white border-b border-gray-200 sticky top-[57px] z-10 text-sm text-gray-500">
-    <button onclick="switchTab('calendar')" id="tab-calendar" class="flex-1 py-3 text-center active-tab">📅 練習記録</button>
-    <button onclick="switchTab('menu')" id="tab-menu" class="flex-1 py-3 text-center">⚙️ メニュー設定</button>
-    <button onclick="switchTab('timer')" id="tab-timer" class="flex-1 py-3 text-center">⏱️ タイマー</button>
-    <button onclick="switchTab('settings')" id="tab-settings" class="flex-1 py-3 text-center">📂 データ移行</button>
-  </nav>
-
-  <!-- メインコンテンツ -->
-  <main class="p-4 max-w-lg mx-auto">
-
-    <!-- 1. カレンダー・練習記録 -->
-    <section id="sec-calendar" class="block space-y-4">
-      <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-        <label class="block text-sm font-medium text-gray-700 mb-1">日付を選択:</label>
-        <input type="date" id="calendar-date-picker" onchange="renderCalendar()" class="bg-gray-50 border border-gray-300 text-gray-900 rounded-lg p-2 w-full focus:outline-none focus:border-blue-500">
-      </div>
-
-      <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 space-y-3">
-        <h2 class="font-bold text-gray-800 border-b pb-2" id="selected-date-label">選択した日の記録</h2>
-        <div id="calendar-checklist" class="space-y-2"></div>
-      </div>
-    </section>
-
-    <!-- 2. メニュー設定 -->
-    <section id="sec-menu" class="hidden space-y-4">
-      <div class="flex justify-between items-center">
-        <h2 class="font-bold text-gray-800">練習メニュー一覧</h2>
-        <button onclick="addNewMenu()" class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-lg text-sm font-bold shadow-sm">
-          ＋ メニュー追加
-        </button>
-      </div>
-      <div id="menu-list" class="space-y-3"></div>
-    </section>
-
-    <!-- 3. タイマー -->
-    <section id="sec-timer" class="hidden space-y-4">
-      <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 text-center space-y-4">
-        <div class="text-sm font-medium text-blue-600" id="timer-status">準備完了</div>
-        <div id="timer-display" class="text-6xl font-extrabold font-mono text-gray-800 tracking-wider">
-          00:30
-        </div>
-
-        <div class="grid grid-cols-2 gap-2 text-xs text-left bg-gray-50 p-3 rounded-lg border border-gray-200">
-          <div>運動時間: <input type="number" id="cfg-work" value="30" class="w-12 border rounded text-center"> 秒</div>
-          <div>休憩時間: <input type="number" id="cfg-rest" value="5" class="w-12 border rounded text-center"> 秒</div>
-        </div>
-
-        <div class="grid grid-cols-2 gap-3 pt-2">
-          <button id="btn-timer-start" onclick="toggleTimer()" class="bg-blue-600 text-white font-bold py-3 rounded-lg shadow">
-            スタート
-          </button>
-          <button onclick="resetTimer()" class="bg-gray-200 text-gray-700 font-bold py-3 rounded-lg">
-            リセット
-          </button>
-        </div>
-      </div>
-    </section>
-
-    <!-- 4. データ移行（追加機能） -->
-    <section id="sec-settings" class="hidden space-y-4">
-      <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-200 space-y-4">
-        <h2 class="font-bold text-gray-800 border-b pb-2">📂 PCとスマホのデータ同期</h2>
-        <p class="text-xs text-gray-600 leading-relaxed">
-          PCで編集したメニューをファイルとして出力し、スマホで読み込むことでデータを共通化できます。
-        </p>
-
-        <div class="space-y-3 pt-2">
-          <button onclick="exportData()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 px-4 rounded-lg shadow-sm text-sm">
-            📥 PCのデータを書き出す（保存）
-          </button>
-
-          <div class="border-t pt-3">
-            <label class="block text-xs font-medium text-gray-700 mb-1">スマホで読み込む (.jsonファイル):</label>
-            <input type="file" id="import-file" accept=".json" onchange="importData(event)" class="block w-full text-xs text-gray-500 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200 border rounded-lg bg-gray-50">
-          </div>
-        </div>
-      </div>
-    </section>
-
-  </main>
-
-  <script>
-    const DEFAULT_MENUS = [
-      { id: 'm1', title: 'ドリブル練習①', detail: '右手30秒 / 休憩5秒 / 左手30秒' },
-      { id: 'm2', title: 'シュート練習①', detail: 'ゴール下10本 / ミドル10本' }
-    ];
-
-    let menus = JSON.parse(localStorage.getItem('bk_menus')) || DEFAULT_MENUS;
-    let records = JSON.parse(localStorage.getItem('bk_records')) || {};
-
-    function saveMenus() {
-      localStorage.setItem('bk_menus', JSON.stringify(menus));
-      renderMenuList();
-      renderCalendar();
-    }
-    function saveRecords() {
-      localStorage.setItem('bk_records', JSON.stringify(records));
-    }
-
-    function switchTab(tab) {
-      ['calendar', 'menu', 'timer', 'settings'].forEach(t => {
-        document.getElementById(`sec-${t}`).classList.add('hidden');
-        document.getElementById(`tab-${t}`).classList.remove('active-tab');
-      });
-      document.getElementById(`sec-${tab}`).classList.remove('hidden');
-      document.getElementById(`tab-${tab}`).classList.add('active-tab');
-    }
-
-    // カレンダー機能
-    const datePicker = document.getElementById('calendar-date-picker');
-    datePicker.value = new Date().toISOString().split('T')[0];
-
-    function renderCalendar() {
-      const date = datePicker.value;
-      document.getElementById('selected-date-label').textContent = `${date} の練習記録`;
-      const container = document.getElementById('calendar-checklist');
-      container.innerHTML = '';
-
-      const dayRecord = records[date] || [];
-
-      menus.forEach(m => {
-        const checked = dayRecord.includes(m.id);
-        const div = document.createElement('label');
-        div.className = 'flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200 cursor-pointer';
-        div.innerHTML = `
-          <div>
-            <div class="font-bold text-sm text-gray-800">${m.title}</div>
-            <div class="text-xs text-gray-500">${m.detail}</div>
-          </div>
-          <input type="checkbox" ${checked ? 'checked' : ''} onchange="toggleRecord('${date}', '${m.id}')" class="w-5 h-5 accent-blue-600 rounded">
-        `;
-        container.appendChild(div);
-      });
-    }
-
-    function toggleRecord(date, menuId) {
-      if (!records[date]) records[date] = [];
-      if (records[date].includes(menuId)) {
-        records[date] = records[date].filter(id => id !== menuId);
-      } else {
-        records[date].push(menuId);
-      }
-      saveRecords();
-    }
-
-    // メニュー編集機能
-    function renderMenuList() {
-      const container = document.getElementById('menu-list');
-      container.innerHTML = '';
-      menus.forEach((m, idx) => {
-        const div = document.createElement('div');
-        div.className = 'bg-white p-3 rounded-lg border border-gray-200 shadow-sm space-y-2';
-        div.innerHTML = `
-          <input type="text" value="${m.title}" onchange="updateMenu(${idx}, 'title', this.value)" class="font-bold w-full border-b pb-1 text-sm focus:outline-none border-gray-300">
-          <input type="text" value="${m.detail}" onchange="updateMenu(${idx}, 'detail', this.value)" class="text-xs text-gray-600 w-full border-b pb-1 focus:outline-none border-gray-300">
-          <div class="text-right">
-            <button onclick="deleteMenu(${idx})" class="text-xs text-red-500 hover:underline">削除</button>
-          </div>
-        `;
-        container.appendChild(div);
-      });
-    }
-
-    function updateMenu(idx, key, val) {
-      menus[idx][key] = val;
-      saveMenus();
-    }
-
-    function deleteMenu(idx) {
-      menus.splice(idx, 1);
-      saveMenus();
-    }
-
-    function addNewMenu() {
-      menus.push({ id: 'm_' + Date.now(), title: '新しいメニュー', detail: '内容を入力してください' });
-      saveMenus();
-    }
-
-    // タイマー機能
-    let timerVal = 30;
-    let timerInt = null;
-    let isWork = true;
-    let isRunning = false;
-
-    function updateTimerUI() {
-      const s = String(timerVal).padStart(2, '0');
-      document.getElementById('timer-display').textContent = `00:${s}`;
-      document.getElementById('timer-status').textContent = isWork ? '運動時間！💪' : '休憩時間 ☕';
-    }
-
-    function toggleTimer() {
-      if (isRunning) {
-        clearInterval(timerInt);
-        isRunning = false;
-        document.getElementById('btn-timer-start').textContent = 'スタート';
-      } else {
-        isRunning = true;
-        document.getElementById('btn-timer-start').textContent = '一時停止';
-        timerInt = setInterval(() => {
-          timerVal--;
-          if (timerVal < 0) {
-            isWork = !isWork;
-            const w = parseInt(document.getElementById('cfg-work').value) || 30;
-            const r = parseInt(document.getElementById('cfg-rest').value) || 5;
-            timerVal = isWork ? w : r;
-          }
-          updateTimerUI();
-        }, 1000);
-      }
-    }
-
-    function resetTimer() {
-      clearInterval(timerInt);
-      isRunning = false;
-      isWork = true;
-      timerVal = parseInt(document.getElementById('cfg-work').value) || 30;
-      document.getElementById('btn-timer-start').textContent = 'スタート';
-      updateTimerUI();
-    }
-
-    // エクスポート / インポート
-    function exportData() {
-      const data = { menus, records };
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = `basket_data_${new Date().toISOString().split('T')[0]}.json`;
-      a.click();
-    }
-
-    function importData(e) {
-      const file = e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = function(evt) {
-        try {
-          const data = JSON.parse(evt.target.result);
-          if (data.menus) menus = data.menus;
-          if (data.records) records = data.records;
-          saveMenus();
-          saveRecords();
-          alert('データの読み込みが完了しました！');
-        } catch (err) {
-          alert('ファイルの形式が正しくありません。');
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>バスケットボール 練習記録 & ステップタイマー</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts & FontAwesome Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- QRCode Generator & Reader Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        bbOrange: '#FF6B00',
+                        bbOrangeDark: '#E05A00',
+                        bbDark: '#191D24',
+                        bbDarkLight: '#222731',
+                        bbDarkCard: '#2A303C',
+                        bbAccent: '#38BDF8',
+                        bbRest: '#10B981'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif']
+                    }
+                }
+            }
         }
-      };
-      reader.readAsText(file);
-    }
+    </script>
+    <style>
+        body {
+            background-color: #101216;
+            color: #F3F4F6;
+            touch-action: manipulation;
+        }
+        /* Custom scrollbars */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #191D24;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #FF6B00;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col font-sans select-none">
 
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./sw.js').catch(() => {});
-    }
+    <!-- Header -->
+    <header class="bg-bbDark border-b border-gray-800 sticky top-0 z-40 shadow-xl">
+        <div class="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-bbOrange to-bbOrangeDark flex items-center justify-center text-white shadow-lg shadow-bbOrange/20">
+                    <i class="fa-solid fa-basketball text-xl animate-pulse"></i>
+                </div>
+                <div>
+                    <h1 class="font-black text-lg sm:text-xl text-white tracking-wider flex items-center gap-2">
+                        HOOP TIMER
+                        <span class="text-[10px] bg-bbOrange/20 text-bbOrange px-2 py-0.5 rounded-full border border-bbOrange/30">PRO</span>
+                    </h1>
+                    <p class="text-xs text-gray-400">ステップ連動タイマー & 練習記録</p>
+                </div>
+            </div>
+            <div id="todayBadge" class="bg-bbDarkLight text-xs px-3 py-1.5 rounded-full border border-gray-700 font-bold text-bbOrange">
+                --/--/--
+            </div>
+        </div>
+    </header>
 
-    renderMenuList();
-    renderCalendar();
-  </script>
+    <!-- Main Content Container -->
+    <main class="flex-grow max-w-4xl w-full mx-auto p-4 pb-24">
+        
+        <!-- Navigation Tabs -->
+        <div class="flex bg-bbDark p-1.5 rounded-2xl mb-6 border border-gray-800/80 shadow-inner">
+            <button onclick="switchTab('timer')" id="tab-timer" class="tab-btn flex-1 py-3 rounded-xl font-extrabold text-sm flex items-center justify-center gap-2 transition-all bg-bbOrange text-white shadow-lg shadow-bbOrange/20">
+                <i class="fa-solid fa-stopwatch text-base"></i>
+                <span>タイマー</span>
+            </button>
+            <button onclick="switchTab('custom')" id="tab-custom" class="tab-btn flex-1 py-3 rounded-xl font-extrabold text-sm flex items-center justify-center gap-2 transition-all text-gray-400 hover:text-white">
+                <i class="fa-solid fa-list-check text-base"></i>
+                <span>メニュー設定</span>
+            </button>
+            <button onclick="switchTab('calendar')" id="tab-calendar" class="tab-btn flex-1 py-3 rounded-xl font-extrabold text-sm flex items-center justify-center gap-2 transition-all text-gray-400 hover:text-white">
+                <i class="fa-regular fa-calendar-check text-base"></i>
+                <span>練習記録</span>
+            </button>
+        </div>
+
+        <!-- 1. TIMER TAB (Menu Integrated Timer) -->
+        <section id="sec-timer" class="tab-content block space-y-6">
+            <div class="bg-bbDark p-5 sm:p-7 rounded-3xl border border-gray-800 shadow-2xl space-y-6">
+                
+                <!-- Menu Selection Header -->
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-bbDarkLight p-4 rounded-2xl border border-gray-800">
+                    <div class="flex-grow">
+                        <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">実行する練習メニューを選択</label>
+                        <select id="timerMenuSelect" onchange="loadSelectedMenuToTimer()" class="w-full bg-bbDarkCard text-white font-bold text-base rounded-xl p-3 border border-gray-700 focus:outline-none focus:border-bbOrange transition">
+                            <!-- JS for dynamically loading options -->
+                        </select>
+                    </div>
+                    <div class="flex items-center gap-2 text-xs text-gray-400 self-end sm:self-center">
+                        <span id="menuTotalTimeBadge" class="bg-bbDark px-3 py-1.5 rounded-lg border border-gray-700 font-mono font-bold text-bbOrange">
+                            総時間: 00:00
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Step Progress Visualizer -->
+                <div>
+                    <div class="flex justify-between items-center text-xs font-bold mb-2">
+                        <span id="progressStepText" class="text-gray-400">ステップ 0 / 0</span>
+                        <span id="progressPercentText" class="text-bbOrange font-mono">0%</span>
+                    </div>
+                    <div class="w-full bg-bbDarkLight h-2.5 rounded-full overflow-hidden p-0.5 border border-gray-800">
+                        <div id="progressBar" class="bg-gradient-to-r from-bbOrange to-yellow-400 h-full rounded-full transition-all duration-300 w-0"></div>
+                    </div>
+                </div>
+
+                <!-- Timer Main Display -->
+                <div id="timerDisplayBox" class="py-10 px-4 rounded-3xl bg-bbDarkLight border-4 border-gray-800 text-center transition-all duration-300 relative overflow-hidden shadow-inner">
+                    <!-- Current Step Type Badge -->
+                    <div class="inline-block mb-3">
+                        <span id="timerPhaseBadge" class="px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest bg-gray-800 text-gray-400 border border-gray-700">
+                            READY
+                        </span>
+                    </div>
+
+                    <!-- Current Step Name -->
+                    <h2 id="timerStepTitle" class="text-2xl sm:text-3xl font-black text-white mb-3 min-h-[2.25rem] flex items-center justify-center gap-2">
+                        メニューを選択してください
+                    </h2>
+
+                    <!-- Main Clock -->
+                    <div id="timerClock" class="text-7xl sm:text-8xl font-black font-mono tracking-tight text-white my-2 drop-shadow-md">
+                        00:00
+                    </div>
+
+                    <!-- Next Step Preview -->
+                    <div id="timerNextInfo" class="mt-4 text-xs sm:text-sm font-semibold text-gray-400 bg-bbDark/60 inline-block px-4 py-2 rounded-xl border border-gray-800/80">
+                        次: --
+                    </div>
+                </div>
+
+                <!-- Control Buttons -->
+                <div class="flex justify-center items-center gap-3 sm:gap-4 pt-2">
+                    <button id="btnStartPause" onclick="toggleTimer()" class="flex-1 max-w-[180px] py-4 bg-bbOrange hover:bg-bbOrangeDark text-white font-extrabold rounded-2xl shadow-lg shadow-bbOrange/20 transition active:scale-95 text-lg flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-play" id="iconStartPause"></i>
+                        <span id="textStartPause">スタート</span>
+                    </button>
+                    <button onclick="skipStep()" class="py-4 px-5 bg-bbDarkLight hover:bg-gray-700 text-gray-200 font-bold rounded-2xl border border-gray-700 transition active:scale-95 text-sm flex items-center justify-center gap-2" title="次のステップへスキップ">
+                        <i class="fa-solid fa-forward"></i>
+                        <span class="hidden sm:inline">スキップ</span>
+                    </button>
+                    <button onclick="resetTimer()" class="py-4 px-5 bg-bbDarkLight hover:bg-gray-700 text-gray-300 font-bold rounded-2xl border border-gray-700 transition active:scale-95 text-sm flex items-center justify-center gap-2" title="リセット">
+                        <i class="fa-solid fa-rotate-right"></i>
+                        <span class="hidden sm:inline">リセット</span>
+                    </button>
+                </div>
+
+                <!-- Completion Action Banner (Hidden by default) -->
+                <div id="completionBanner" class="hidden bg-emerald-500/10 border-2 border-emerald-500 p-5 rounded-2xl text-center space-y-3">
+                    <div class="text-emerald-400 font-black text-lg flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-circle-check text-xl"></i>
+                        <span>トレーニング完了！お疲れ様でした！</span>
+                    </div>
+                    <p class="text-xs text-gray-300">このメニューを本日のカレンダー完了記録に追加しますか？</p>
+                    <button onclick="autoRecordCurrentMenu()" class="bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold px-6 py-3 rounded-xl shadow-lg transition text-sm flex items-center justify-center gap-2 mx-auto">
+                        <i class="fa-solid fa-calendar-plus"></i>
+                        <span>本日の練習記録に保存する</span>
+                    </button>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- 2. CUSTOM MENU TAB (Steps Builder + Transfer Actions) -->
+        <section id="sec-custom" class="tab-content hidden space-y-6">
+            <div class="bg-bbDark p-5 sm:p-7 rounded-3xl border border-gray-800 shadow-2xl space-y-6">
+                
+                <!-- Section Header & Top Actions -->
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-gray-800">
+                    <div>
+                        <h2 class="text-lg font-extrabold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-sliders text-bbOrange"></i>
+                            練習メニュー＆ステップ設定
+                        </h2>
+                        <p class="text-xs text-gray-400">各メニューごとに運動と休憩の細かなステップを自由にカスタム作成できます</p>
+                    </div>
+                    
+                    <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                        <!-- Data Export / Import Buttons -->
+                        <button onclick="exportDataJSON()" class="bg-bbDarkLight hover:bg-gray-700 text-gray-200 text-xs font-bold px-3 py-2.5 rounded-xl border border-gray-700 transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-download text-bbOrange"></i>
+                            <span>JSON出力</span>
+                        </button>
+                        <label class="bg-bbDarkLight hover:bg-gray-700 text-gray-200 text-xs font-bold px-3 py-2.5 rounded-xl border border-gray-700 transition flex items-center gap-1.5 cursor-pointer">
+                            <i class="fa-solid fa-upload text-bbAccent"></i>
+                            <span>JSON取込</span>
+                            <input type="file" accept=".json" onchange="importDataJSON(event)" class="hidden">
+                        </label>
+                        <button onclick="openQRScanModal()" class="bg-bbDarkLight hover:bg-gray-700 text-gray-200 text-xs font-bold px-3 py-2.5 rounded-xl border border-gray-700 transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-qrcode text-emerald-400"></i>
+                            <span>QR読取</span>
+                        </button>
+
+                        <button onclick="openMenuModal()" class="bg-bbOrange hover:bg-bbOrangeDark text-white text-xs font-extrabold px-4 py-2.5 rounded-xl transition flex items-center gap-1.5 shadow-lg shadow-bbOrange/20 ml-auto sm:ml-0">
+                            <i class="fa-solid fa-plus"></i>
+                            <span>新規メニュー</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Menu Cards List -->
+                <div id="menuList" class="space-y-4">
+                    <!-- JS for rendering menu cards -->
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. CALENDAR TAB (Records) -->
+        <section id="sec-calendar" class="tab-content hidden space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+                <!-- Calendar View -->
+                <div class="md:col-span-7 bg-bbDark p-5 rounded-3xl border border-gray-800 shadow-xl space-y-4">
+                    <div class="flex justify-between items-center mb-2">
+                        <h2 id="calendarMonthYear" class="text-lg font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-calendar-days text-bbOrange"></i>
+                            ----年 --月
+                        </h2>
+                        <div class="flex gap-2">
+                            <button onclick="changeMonth(-1)" class="p-2 rounded-xl bg-bbDarkLight hover:bg-gray-700 text-gray-300 transition border border-gray-700">
+                                <i class="fa-solid fa-chevron-left"></i>
+                            </button>
+                            <button onclick="changeMonth(1)" class="p-2 rounded-xl bg-bbDarkLight hover:bg-gray-700 text-gray-300 transition border border-gray-700">
+                                <i class="fa-solid fa-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <!-- Weekday Header -->
+                    <div class="grid grid-cols-7 text-center font-extrabold text-xs text-gray-500 py-1">
+                        <span class="text-red-400">日</span>
+                        <span>月</span>
+                        <span>火</span>
+                        <span>水</span>
+                        <span>木</span>
+                        <span>金</span>
+                        <span class="text-blue-400">土</span>
+                    </div>
+                    <!-- Date Grid -->
+                    <div id="calendarGrid" class="grid grid-cols-7 gap-1.5"></div>
+                </div>
+
+                <!-- Selected Day Log View -->
+                <div class="md:col-span-5 bg-bbDark p-5 rounded-3xl border border-gray-800 shadow-xl flex flex-col justify-between space-y-4">
+                    <div>
+                        <div class="flex justify-between items-center mb-4 pb-3 border-b border-gray-800">
+                            <div>
+                                <span id="selectedDateLabel" class="text-base font-extrabold text-bbOrange">選択日の日付</span>
+                                <p class="text-xs text-gray-400">実施したメニュー</p>
+                            </div>
+                            <span id="logStatusBadge" class="text-xs px-3 py-1 rounded-full bg-gray-800 text-gray-400 font-bold">未記録</span>
+                        </div>
+
+                        <!-- Menu Checkbox List -->
+                        <div id="dailyChecklist" class="space-y-2.5 max-h-64 overflow-y-auto pr-1">
+                            <!-- JS Generated -->
+                        </div>
+                    </div>
+
+                    <!-- Note Field & Save Button -->
+                    <div class="pt-3 border-t border-gray-800 space-y-3">
+                        <textarea id="dailyNote" rows="2" placeholder="本日のメモ（調子、反省点、シュート成功率など）..." class="w-full bg-bbDarkLight text-sm rounded-xl p-3 border border-gray-700 focus:outline-none focus:border-bbOrange text-white resize-none"></textarea>
+                        <button onclick="saveDailyLog()" class="w-full bg-bbOrange hover:bg-bbOrangeDark text-white font-extrabold py-3.5 rounded-xl transition shadow-lg shadow-bbOrange/20 flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-floppy-disk"></i>
+                            <span>記録を保存する</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Menu Create/Edit Modal Dialog -->
+    <div id="menuModal" class="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 hidden backdrop-blur-sm">
+        <div class="bg-bbDark w-full max-w-xl rounded-3xl p-6 border border-gray-800 shadow-2xl space-y-5 max-h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center pb-3 border-b border-gray-800">
+                <h3 id="modalTitle" class="text-lg font-extrabold text-white">メニュー編集</h3>
+                <button onclick="closeMenuModal()" class="text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            
+            <input type="hidden" id="editMenuId">
+            
+            <div class="overflow-y-auto space-y-4 pr-1 flex-grow">
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 mb-1">メニュータイトル</label>
+                    <input type="text" id="menuTitleInput" placeholder="例: ドリブル基本セット①" class="w-full bg-bbDarkLight text-white font-bold rounded-xl p-3 border border-gray-700 focus:outline-none focus:border-bbOrange text-sm">
+                </div>
+
+                <!-- Steps Builder Container -->
+                <div>
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="block text-xs font-bold text-gray-400">ステップ構成 (順番にカウントダウンされます)</label>
+                        <button type="button" onclick="addStepRow()" class="text-xs text-bbOrange font-bold hover:underline flex items-center gap-1">
+                            <i class="fa-solid fa-plus-circle"></i> ステップ追加
+                        </button>
+                    </div>
+                    
+                    <div id="stepsContainer" class="space-y-2.5">
+                        <!-- Step Rows JS Generated -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex gap-3 pt-3 border-t border-gray-800">
+                <button onclick="closeMenuModal()" class="flex-1 py-3 bg-gray-800 hover:bg-gray-700 text-gray-300 font-bold text-sm rounded-xl transition">キャンセル</button>
+                <button onclick="saveMenu()" class="flex-1 py-3 bg-bbOrange hover:bg-bbOrangeDark text-white font-bold text-sm rounded-xl transition shadow-lg shadow-bbOrange/20">保存する</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- QR Code Display Modal -->
+    <div id="qrShowModal" class="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 hidden backdrop-blur-sm">
+        <div class="bg-bbDark w-full max-w-sm rounded-3xl p-6 border border-gray-800 shadow-2xl text-center space-y-4">
+            <h3 id="qrModalTitle" class="text-base font-extrabold text-white">メニュー送信QRコード</h3>
+            <p class="text-xs text-gray-400">スマホでこのQRコードを読み取ると、メニューデータを取り込めます。</p>
+            
+            <div class="bg-white p-4 rounded-2xl inline-block shadow-inner mx-auto">
+                <div id="qrcodeCanvas"></div>
+            </div>
+
+            <button onclick="closeQRShowModal()" class="w-full py-3 bg-gray-800 hover:bg-gray-700 text-gray-200 font-bold text-sm rounded-xl transition">
+                閉じる
+            </button>
+        </div>
+    </div>
+
+    <!-- QR Scanner Modal -->
+    <div id="qrScanModal" class="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 hidden backdrop-blur-sm">
+        <div class="bg-bbDark w-full max-w-md rounded-3xl p-6 border border-gray-800 shadow-2xl text-center space-y-4">
+            <div class="flex justify-between items-center pb-2 border-b border-gray-800">
+                <h3 class="text-base font-extrabold text-white">QRコードでメニュー読込</h3>
+                <button onclick="closeQRScanModal()" class="text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            
+            <div id="qr-reader" class="overflow-hidden rounded-2xl border border-gray-700 bg-black min-h-[250px]"></div>
+
+            <button onclick="closeQRScanModal()" class="w-full py-3 bg-gray-800 hover:bg-gray-700 text-gray-200 font-bold text-sm rounded-xl transition">
+                キャンセル
+            </button>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-gray-900 border border-bbOrange text-white text-xs px-5 py-3 rounded-full shadow-2xl transition-all duration-300 opacity-0 pointer-events-none z-50 flex items-center gap-2.5">
+        <i class="fa-solid fa-circle-check text-bbOrange text-sm"></i>
+        <span id="toastMsg">保存完了しました</span>
+    </div>
+
+    <script>
+        // --- Initial Mock Data ---
+        const DEFAULT_MENUS = [
+            {
+                id: 'm1',
+                title: 'ドリブル基礎トレーニング①',
+                steps: [
+                    { name: '右手パウンドドリブル', type: 'WORK', time: 30 },
+                    { name: '休憩', type: 'REST', time: 10 },
+                    { name: '左手パウンドドリブル', type: 'WORK', time: 30 },
+                    { name: '休憩', type: 'REST', time: 10 },
+                    { name: 'フロントチェンジ', type: 'WORK', time: 30 }
+                ]
+            },
+            {
+                id: 'm2',
+                title: 'シュート＆ダッシュセット',
+                steps: [
+                    { name: 'ゴール下シュート(右)', type: 'WORK', time: 45 },
+                    { name: '休憩', type: 'REST', time: 15 },
+                    { name: 'ゴール下シュート(左)', type: 'WORK', time: 45 },
+                    { name: '休憩', type: 'REST', time: 15 },
+                    { name: 'ダッシュ＆バックペダル', type: 'WORK', time: 30 }
+                ]
+            }
+        ];
+
+        let menuList = JSON.parse(localStorage.getItem('hoop_step_menus')) || DEFAULT_MENUS;
+        let dailyLogs = JSON.parse(localStorage.getItem('hoop_step_logs')) || {};
+
+        // Active State Variables
+        let currentDate = new Date();
+        let selectedDateStr = formatDate(new Date());
+
+        // Timer Engine Variables
+        let timerInterval = null;
+        let isRunning = false;
+        let activeMenu = null;
+        let currentStepIndex = 0;
+        let remainingSeconds = 0;
+        let html5QrCode = null;
+
+        // --- Initialization ---
+        window.onload = function() {
+            const today = new Date();
+            document.getElementById('todayBadge').textContent = `${today.getFullYear()}/${today.getMonth()+1}/${today.getDate()}`;
+            
+            renderCalendar();
+            selectDate(selectedDateStr);
+            renderMenuList();
+            populateTimerMenuSelect();
+        };
+
+        // --- Tab Switcher ---
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(el => {
+                el.classList.remove('bg-bbOrange', 'text-white', 'shadow-lg', 'shadow-bbOrange/20');
+                el.classList.add('text-gray-400');
+            });
+
+            document.getElementById(`sec-${tabName}`).classList.remove('hidden');
+            const activeBtn = document.getElementById(`tab-${tabName}`);
+            activeBtn.classList.add('bg-bbOrange', 'text-white', 'shadow-lg', 'shadow-bbOrange/20');
+            activeBtn.classList.remove('text-gray-400');
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMsg').textContent = msg;
+            toast.classList.remove('opacity-0', 'pointer-events-none');
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'pointer-events-none');
+            }, 2500);
+        }
+
+        // --- Date Helpers ---
+        function formatDate(date) {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
+        // --- Web Audio API (Sound Synthesizer) ---
+        let audioCtx = null;
+
+        function playBeep(freq = 880, duration = 0.15) {
+            try {
+                if (!audioCtx) {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+
+                gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration);
+            } catch (e) {
+                console.log('Audio Error:', e);
+            }
+        }
+
+        // --- TIMER ENGINE ---
+        function populateTimerMenuSelect() {
+            const select = document.getElementById('timerMenuSelect');
+            select.innerHTML = '';
+
+            if (menuList.length === 0) {
+                select.innerHTML = '<option value="">登録済みメニューがありません</option>';
+                resetTimerUIEmpty();
+                return;
+            }
+
+            menuList.forEach(m => {
+                const opt = document.createElement('option');
+                opt.value = m.id;
+                opt.textContent = m.title;
+                select.appendChild(opt);
+            });
+
+            loadSelectedMenuToTimer();
+        }
+
+        function loadSelectedMenuToTimer() {
+            const selectedId = document.getElementById('timerMenuSelect').value;
+            activeMenu = menuList.find(m => m.id === selectedId) || null;
+
+            resetTimer();
+        }
+
+        function resetTimerUIEmpty() {
+            document.getElementById('timerStepTitle').textContent = 'メニューを選択してください';
+            document.getElementById('timerClock').textContent = '00:00';
+            document.getElementById('timerNextInfo').textContent = '次: --';
+            document.getElementById('menuTotalTimeBadge').textContent = '総時間: 00:00';
+            document.getElementById('progressBar').style.width = '0%';
+            document.getElementById('progressStepText').textContent = 'ステップ 0 / 0';
+            document.getElementById('progressPercentText').textContent = '0%';
+        }
+
+        function resetTimer() {
+            clearInterval(timerInterval);
+            timerInterval = null;
+            isRunning = false;
+
+            document.getElementById('completionBanner').classList.add('hidden');
+            document.getElementById('textStartPause').textContent = 'スタート';
+            document.getElementById('iconStartPause').className = 'fa-solid fa-play';
+
+            if (!activeMenu || !activeMenu.steps || activeMenu.steps.length === 0) {
+                resetTimerUIEmpty();
+                return;
+            }
+
+            currentStepIndex = 0;
+            remainingSeconds = activeMenu.steps[0].time;
+
+            const totalSec = activeMenu.steps.reduce((acc, curr) => acc + parseInt(curr.time || 0), 0);
+            const tm = String(Math.floor(totalSec / 60)).padStart(2, '0');
+            const ts = String(totalSec % 60).padStart(2, '0');
+            document.getElementById('menuTotalTimeBadge').textContent = `総時間: ${tm}:${ts}`;
+
+            updateTimerDisplay();
+        }
+
+        function toggleTimer() {
+            if (!activeMenu || activeMenu.steps.length === 0) {
+                showToast('メニューが正しく選択されていません');
+                return;
+            }
+
+            if (isRunning) {
+                pauseTimer();
+            } else {
+                startTimer();
+            }
+        }
+
+        function startTimer() {
+            if (currentStepIndex >= activeMenu.steps.length) {
+                resetTimer();
+            }
+
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+
+            isRunning = true;
+            document.getElementById('textStartPause').textContent = '一時停止';
+            document.getElementById('iconStartPause').className = 'fa-solid fa-pause';
+
+            playBeep(600, 0.15);
+
+            timerInterval = setInterval(() => {
+                remainingSeconds--;
+
+                if (remainingSeconds < 0) {
+                    currentStepIndex++;
+                    if (currentStepIndex < activeMenu.steps.length) {
+                        remainingSeconds = activeMenu.steps[currentStepIndex].time;
+                        const nextType = activeMenu.steps[currentStepIndex].type;
+                        playBeep(nextType === 'WORK' ? 1000 : 500, 0.35);
+                    } else {
+                        clearInterval(timerInterval);
+                        timerInterval = null;
+                        isRunning = false;
+                        playBeep(1200, 0.6);
+                        document.getElementById('completionBanner').classList.remove('hidden');
+                        document.getElementById('textStartPause').textContent = 'スタート';
+                        document.getElementById('iconStartPause').className = 'fa-solid fa-play';
+                    }
+                } else if (remainingSeconds <= 3 && remainingSeconds > 0) {
+                    playBeep(880, 0.1);
+                }
+
+                updateTimerDisplay();
+            }, 1000);
+        }
+
+        function pauseTimer() {
+            clearInterval(timerInterval);
+            timerInterval = null;
+            isRunning = false;
+            document.getElementById('textStartPause').textContent = '再開';
+            document.getElementById('iconStartPause').className = 'fa-solid fa-play';
+        }
+
+        function skipStep() {
+            if (!activeMenu || !activeMenu.steps || currentStepIndex >= activeMenu.steps.length) return;
+            
+            currentStepIndex++;
+            if (currentStepIndex < activeMenu.steps.length) {
+                remainingSeconds = activeMenu.steps[currentStepIndex].time;
+                playBeep(700, 0.1);
+            } else {
+                clearInterval(timerInterval);
+                timerInterval = null;
+                isRunning = false;
+                document.getElementById('completionBanner').classList.remove('hidden');
+            }
+            updateTimerDisplay();
+        }
+
+        function updateTimerDisplay() {
+            if (!activeMenu || !activeMenu.steps || activeMenu.steps.length === 0) return;
+
+            const totalSteps = activeMenu.steps.length;
+            const displayBox = document.getElementById('timerDisplayBox');
+            const phaseBadge = document.getElementById('timerPhaseBadge');
+            const stepTitle = document.getElementById('timerStepTitle');
+            const clock = document.getElementById('timerClock');
+            const nextInfo = document.getElementById('timerNextInfo');
+
+            if (currentStepIndex >= totalSteps) {
+                phaseBadge.textContent = 'FINISH';
+                phaseBadge.className = 'px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
+                stepTitle.textContent = '🎉 全ステップ完了！';
+                clock.textContent = '00:00';
+                nextInfo.textContent = 'お疲れ様でした！';
+                displayBox.className = 'py-10 px-4 rounded-3xl bg-emerald-500/10 border-4 border-emerald-500 text-center transition-all duration-300 relative overflow-hidden shadow-inner';
+                
+                document.getElementById('progressBar').style.width = '100%';
+                document.getElementById('progressStepText').textContent = `ステップ ${totalSteps} / ${totalSteps}`;
+                document.getElementById('progressPercentText').textContent = '100%';
+                return;
+            }
+
+            const step = activeMenu.steps[currentStepIndex];
+            stepTitle.textContent = step.name || (step.type === 'WORK' ? '運動' : '休憩');
+
+            const m = String(Math.floor(remainingSeconds / 60)).padStart(2, '0');
+            const s = String(remainingSeconds % 60).padStart(2, '0');
+            clock.textContent = `${m}:${s}`;
+
+            if (step.type === 'WORK') {
+                phaseBadge.textContent = '🔥 WORK';
+                phaseBadge.className = 'px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest bg-bbOrange/20 text-bbOrange border border-bbOrange/30';
+                displayBox.className = 'py-10 px-4 rounded-3xl bg-bbOrange/10 border-4 border-bbOrange text-center transition-all duration-300 relative overflow-hidden shadow-inner';
+            } else {
+                phaseBadge.textContent = '☕ REST';
+                phaseBadge.className = 'px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest bg-bbRest/20 text-bbRest border border-bbRest/30';
+                displayBox.className = 'py-10 px-4 rounded-3xl bg-bbRest/10 border-4 border-bbRest text-center transition-all duration-300 relative overflow-hidden shadow-inner';
+            }
+
+            if (currentStepIndex + 1 < totalSteps) {
+                const nextStep = activeMenu.steps[currentStepIndex + 1];
+                nextInfo.textContent = `次: ${nextStep.name} (${nextStep.time}秒)`;
+            } else {
+                nextInfo.textContent = '次: 完了！';
+            }
+
+            const progressRatio = (currentStepIndex / totalSteps) * 100;
+            document.getElementById('progressBar').style.width = `${progressRatio}%`;
+            document.getElementById('progressStepText').textContent = `ステップ ${currentStepIndex + 1} / ${totalSteps}`;
+            document.getElementById('progressPercentText').textContent = `${Math.round(progressRatio)}%`;
+        }
+
+        function autoRecordCurrentMenu() {
+            if (!activeMenu) return;
+
+            const todayStr = formatDate(new Date());
+            const log = dailyLogs[todayStr] || { completedMenuIds: [], note: '' };
+
+            if (!log.completedMenuIds.includes(activeMenu.id)) {
+                log.completedMenuIds.push(activeMenu.id);
+            }
+
+            dailyLogs[todayStr] = log;
+            localStorage.setItem('hoop_step_logs', JSON.stringify(dailyLogs));
+
+            showToast('本日の練習記録に追加しました');
+            document.getElementById('completionBanner').classList.add('hidden');
+            renderCalendar();
+            selectDate(selectedDateStr);
+        }
+
+        // --- MENU CUSTOM BUILDER ---
+        function renderMenuList() {
+            const container = document.getElementById('menuList');
+            container.innerHTML = '';
+
+            if (menuList.length === 0) {
+                container.innerHTML = '<div class="text-center py-8 text-gray-500 text-sm">登録済みのメニューがありません。「新規メニュー作成」から追加してください。</div>';
+                return;
+            }
+
+            menuList.forEach(menu => {
+                const totalSec = menu.steps.reduce((acc, curr) => acc + parseInt(curr.time || 0), 0);
+                const m = Math.floor(totalSec / 60);
+                const s = totalSec % 60;
+
+                const card = document.createElement('div');
+                card.className = 'bg-bbDarkLight p-4 rounded-2xl border border-gray-800 space-y-3';
+                card.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <h3 class="font-bold text-white text-base flex items-center gap-2">
+                            ${menu.title}
+                            <span class="text-xs font-mono font-normal bg-bbDark px-2.5 py-0.5 rounded-md text-bbOrange border border-gray-700">
+                                約${m}分${s}秒
+                            </span>
+                        </h3>
+                        <div class="flex items-center gap-2">
+                            <button onclick="showMenuQR('${menu.id}')" class="p-2 text-emerald-400 hover:bg-gray-800 rounded-lg transition" title="QRコードで送信">
+                                <i class="fa-solid fa-qrcode"></i>
+                            </button>
+                            <button onclick="openMenuModal('${menu.id}')" class="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition">
+                                <i class="fa-solid fa-pen-to-square"></i>
+                            </button>
+                            <button onclick="deleteMenu('${menu.id}')" class="p-2 text-red-400 hover:bg-red-500/10 rounded-lg transition">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap gap-1.5 pt-1">
+                        ${menu.steps.map(s => `
+                            <span class="text-[11px] px-2.5 py-1 rounded-lg border font-medium ${s.type === 'WORK' ? 'bg-bbOrange/10 border-bbOrange/30 text-bbOrange' : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'}">
+                                ${s.name} (${s.time}s)
+                            </span>
+                        `).join('')}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function openMenuModal(menuId = null) {
+            const modal = document.getElementById('menuModal');
+            const container = document.getElementById('stepsContainer');
+            container.innerHTML = '';
+
+            if (menuId) {
+                const m = menuList.find(x => x.id === menuId);
+                document.getElementById('modalTitle').textContent = 'メニュー編集';
+                document.getElementById('editMenuId').value = m.id;
+                document.getElementById('menuTitleInput').value = m.title;
+                m.steps.forEach(step => addStepRow(step.name, step.type, step.time));
+            } else {
+                document.getElementById('modalTitle').textContent = '新規メニュー作成';
+                document.getElementById('editMenuId').value = '';
+                document.getElementById('menuTitleInput').value = '';
+                // Default step templates
+                addStepRow('右手パウンド', 'WORK', 30);
+                addStepRow('休憩', 'REST', 10);
+                addStepRow('左手パウンド', 'WORK', 30);
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        function closeMenuModal() {
+            document.getElementById('menuModal').classList.add('hidden');
+        }
+
+        function addStepRow(name = '', type = 'WORK', time = 30) {
+            const container = document.getElementById('stepsContainer');
+            const row = document.createElement('div');
+            row.className = 'step-row flex items-center gap-2 bg-bbDarkCard p-2 rounded-xl border border-gray-700';
+            row.innerHTML = `
+                <select class="step-type bg-bbDark text-xs font-bold text-white p-2 rounded-lg border border-gray-700 focus:outline-none">
+                    <option value="WORK" ${type === 'WORK' ? 'selected' : ''}>運動</option>
+                    <option value="REST" ${type === 'REST' ? 'selected' : ''}>休憩</option>
+                </select>
+                <input type="text" value="${name}" placeholder="ステップ名" class="step-name flex-grow bg-bbDark text-white text-xs font-semibold p-2 rounded-lg border border-gray-700 focus:outline-none">
+                <div class="flex items-center gap-1 shrink-0">
+                    <input type="number" value="${time}" min="1" class="step-time w-16 bg-bbDark text-white text-xs font-mono font-bold p-2 rounded-lg border border-gray-700 text-center focus:outline-none">
+                    <span class="text-xs text-gray-400">秒</span>
+                </div>
+                <button type="button" onclick="this.closest('.step-row').remove()" class="p-1.5 text-gray-500 hover:text-red-400 transition">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            `;
+            container.appendChild(row);
+        }
+
+        function saveMenu() {
+            const title = document.getElementById('menuTitleInput').value.trim();
+            if (!title) {
+                showToast('メニュータイトルを入力してください');
+                return;
+            }
+
+            const stepRows = document.querySelectorAll('#stepsContainer .step-row');
+            const steps = [];
+            stepRows.forEach(row => {
+                const type = row.querySelector('.step-type').value;
+                const name = row.querySelector('.step-name').value.trim() || (type === 'WORK' ? '運動' : '休憩');
+                const time = parseInt(row.querySelector('.step-time').value) || 10;
+                steps.push({ name, type, time });
+            });
+
+            if (steps.length === 0) {
+                showToast('ステップを1つ以上追加してください');
+                return;
+            }
+
+            const editId = document.getElementById('editMenuId').value;
+            if (editId) {
+                const index = menuList.findIndex(m => m.id === editId);
+                if (index !== -1) {
+                    menuList[index] = { id: editId, title, steps };
+                }
+            } else {
+                menuList.push({
+                    id: 'm_' + Date.now(),
+                    title,
+                    steps
+                });
+            }
+
+            saveMenuListToStorage();
+            closeMenuModal();
+            showToast('メニューを保存しました');
+        }
+
+        function deleteMenu(menuId) {
+            if (!confirm('この練習メニューを削除してもよろしいですか？')) return;
+            menuList = menuList.filter(m => m.id !== menuId);
+            saveMenuListToStorage();
+            showToast('メニューを削除しました');
+        }
+
+        function saveMenuListToStorage() {
+            localStorage.setItem('hoop_step_menus', JSON.stringify(menuList));
+            renderMenuList();
+            populateTimerMenuSelect();
+            selectDate(selectedDateStr);
+        }
+
+        // --- DATA EXPORT / IMPORT (FILE & QR) ---
+        function exportDataJSON() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(menuList, null, 2));
+            const dlAnchorElem = document.createElement('a');
+            dlAnchorElem.setAttribute("href", dataStr);
+            dlAnchorElem.setAttribute("download", `hoop_timer_menus_${formatDate(new Date())}.json`);
+            document.body.appendChild(dlAnchorElem);
+            dlAnchorElem.click();
+            dlAnchorElem.remove();
+            showToast('JSONファイルを出力しました');
+        }
+
+        function importDataJSON(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (Array.isArray(imported)) {
+                        menuList = imported;
+                        saveMenuListToStorage();
+                        showToast('メニューを取り込みました！');
+                    } else {
+                        showToast('無効なデータ形式です');
+                    }
+                } catch (err) {
+                    showToast('JSONファイルの読み込みに失敗しました');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function showMenuQR(menuId) {
+            const menu = menuList.find(m => m.id === menuId);
+            if (!menu) return;
+
+            const qrContainer = document.getElementById('qrcodeCanvas');
+            qrContainer.innerHTML = '';
+
+            document.getElementById('qrModalTitle').textContent = `「${menu.title}」を送信`;
+
+            // Compact JSON payload for QR code
+            const payload = JSON.stringify([menu]);
+
+            new QRCode(qrContainer, {
+                text: payload,
+                width: 200,
+                height: 200,
+                correctLevel: QRCode.CorrectLevel.L
+            });
+
+            document.getElementById('qrShowModal').classList.remove('hidden');
+        }
+
+        function closeQRShowModal() {
+            document.getElementById('qrShowModal').classList.add('hidden');
+        }
+
+        function openQRScanModal() {
+            document.getElementById('qrScanModal').classList.remove('hidden');
+            html5QrCode = new Html5Qrcode("qr-reader");
+            
+            html5QrCode.start(
+                { facingMode: "environment" },
+                { fps: 10, qrbox: { width: 220, height: 220 } },
+                (decodedText) => {
+                    try {
+                        const imported = JSON.parse(decodedText);
+                        if (Array.isArray(imported)) {
+                            imported.forEach(newMenu => {
+                                const idx = menuList.findIndex(m => m.id === newMenu.id);
+                                if (idx !== -1) {
+                                    menuList[idx] = newMenu;
+                                } else {
+                                    menuList.push(newMenu);
+                                }
+                            });
+                            saveMenuListToStorage();
+                            showToast('QRからメニューを受信しました！');
+                            closeQRScanModal();
+                        }
+                    } catch (e) {
+                        showToast('読み取ったQRデータが正しくありません');
+                    }
+                },
+                (errorMessage) => { /* scanning */ }
+            ).catch(err => {
+                showToast('カメラの起動に失敗しました');
+            });
+        }
+
+        function closeQRScanModal() {
+            if (html5QrCode) {
+                html5QrCode.stop().then(() => {
+                    html5QrCode.clear();
+                    document.getElementById('qrScanModal').classList.add('hidden');
+                }).catch(() => {
+                    document.getElementById('qrScanModal').classList.add('hidden');
+                });
+            } else {
+                document.getElementById('qrScanModal').classList.add('hidden');
+            }
+        }
+
+        // --- CALENDAR & LOGS ---
+        function renderCalendar() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+
+            document.getElementById('calendarMonthYear').innerHTML = `
+                <i class="fa-solid fa-calendar-days text-bbOrange"></i>
+                ${year}年 ${month + 1}月
+            `;
+
+            const firstDay = new Date(year, month, 1).getDay();
+            const lastDate = new Date(year, month + 1, 0).getDate();
+
+            const grid = document.getElementById('calendarGrid');
+            grid.innerHTML = '';
+
+            // Empty cells before month start
+            for (let i = 0; i < firstDay; i++) {
+                const empty = document.createElement('div');
+                empty.className = 'h-10 sm:h-12 rounded-xl bg-transparent';
+                grid.appendChild(empty);
+            }
+
+            const todayStr = formatDate(new Date());
+
+            for (let day = 1; day <= lastDate; day++) {
+                const dateObj = new Date(year, month, day);
+                const dStr = formatDate(dateObj);
+
+                const cell = document.createElement('button');
+                cell.onclick = () => selectDate(dStr);
+
+                const hasLog = dailyLogs[dStr] && dailyLogs[dStr].completedMenuIds && dailyLogs[dStr].completedMenuIds.length > 0;
+                const isSelected = dStr === selectedDateStr;
+                const isToday = dStr === todayStr;
+
+                let classes = 'h-10 sm:h-12 rounded-xl text-xs font-bold flex flex-col items-center justify-center relative transition border ';
+
+                if (isSelected) {
+                    classes += 'border-bbOrange bg-bbOrange/20 text-white shadow-md ';
+                } else {
+                    classes += 'border-gray-800 bg-bbDarkLight hover:bg-gray-700 text-gray-300 ';
+                }
+
+                if (isToday) {
+                    classes += 'ring-2 ring-bbOrange/50 ';
+                }
+
+                cell.className = classes;
+                cell.innerHTML = `
+                    <span>${day}</span>
+                    ${hasLog ? '<span class="w-2 h-2 rounded-full bg-emerald-400 absolute bottom-1.5"></span>' : ''}
+                `;
+
+                grid.appendChild(cell);
+            }
+        }
+
+        function changeMonth(delta) {
+            currentDate.setMonth(currentDate.getMonth() + delta);
+            renderCalendar();
+        }
+
+        function selectDate(dStr) {
+            selectedDateStr = dStr;
+            renderCalendar();
+
+            document.getElementById('selectedDateLabel').textContent = dStr;
+
+            const log = dailyLogs[dStr] || { completedMenuIds: [], note: '' };
+            const checklist = document.getElementById('dailyChecklist');
+            checklist.innerHTML = '';
+
+            if (menuList.length === 0) {
+                checklist.innerHTML = '<div class="text-xs text-gray-500 py-2">メニューが未登録です</div>';
+            } else {
+                menuList.forEach(m => {
+                    const isChecked = log.completedMenuIds.includes(m.id);
+                    const item = document.createElement('label');
+                    item.className = 'flex items-center gap-3 bg-bbDarkLight p-3 rounded-xl border border-gray-800 cursor-pointer hover:border-gray-700 transition';
+                    item.innerHTML = `
+                        <input type="checkbox" value="${m.id}" ${isChecked ? 'checked' : ''} class="log-menu-check w-4 h-4 rounded text-bbOrange focus:ring-0 bg-bbDark border-gray-700">
+                        <span class="text-xs font-bold text-gray-200">${m.title}</span>
+                    `;
+                    checklist.appendChild(item);
+                });
+            }
+
+            document.getElementById('dailyNote').value = log.note || '';
+
+            const statusBadge = document.getElementById('logStatusBadge');
+            if (log.completedMenuIds && log.completedMenuIds.length > 0) {
+                statusBadge.textContent = '完了記録あり';
+                statusBadge.className = 'text-xs px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/30';
+            } else {
+                statusBadge.textContent = '未記録';
+                statusBadge.className = 'text-xs px-3 py-1 rounded-full bg-gray-800 text-gray-400 font-bold';
+            }
+        }
+
+        function saveDailyLog() {
+            const checkedMenuIds = [];
+            document.querySelectorAll('.log-menu-check:checked').forEach(chk => {
+                checkedMenuIds.push(chk.value);
+            });
+
+            const note = document.getElementById('dailyNote').value.trim();
+
+            dailyLogs[selectedDateStr] = {
+                completedMenuIds: checkedMenuIds,
+                note: note
+            };
+
+            localStorage.setItem('hoop_step_logs', JSON.stringify(dailyLogs));
+            showToast('本日の記録を保存しました');
+            renderCalendar();
+            selectDate(selectedDateStr);
+        }
+    </script>
 </body>
 </html>
