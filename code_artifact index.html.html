@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>バスケットボール 練習記録 & ステップタイマー</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts & FontAwesome Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        bbOrange: '#FF6B00',
+                        bbOrangeDark: '#E05A00',
+                        bbDark: '#191D24',
+                        bbDarkLight: '#222731',
+                        bbDarkCard: '#2A303C',
+                        bbAccent: '#38BDF8',
+                        bbRest: '#10B981'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #101216;
+            color: #F3F4F6;
+            touch-action: manipulation;
+        }
+        /* Custom scrollbars */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #191D24;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #FF6B00;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col font-sans select-none">
+
+    <!-- Header -->
+    <header class="bg-bbDark border-b border-gray-800 sticky top-0 z-40 shadow-xl">
+        <div class="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-bbOrange to-bbOrangeDark flex items-center justify-center text-white shadow-lg shadow-bbOrange/20">
+                    <i class="fa-solid fa-basketball text-xl animate-pulse"></i>
+                </div>
+                <div>
+                    <h1 class="font-black text-lg sm:text-xl text-white tracking-wider flex items-center gap-2">
+                        HOOP TIMER
+                        <span class="text-[10px] bg-bbOrange/20 text-bbOrange px-2 py-0.5 rounded-full border border-bbOrange/30">PRO</span>
+                    </h1>
+                    <p class="text-xs text-gray-400">ステップ連動タイマー & 練習記録</p>
+                </div>
+            </div>
+            <div id="todayBadge" class="bg-bbDarkLight text-xs px-3 py-1.5 rounded-full border border-gray-700 font-bold text-bbOrange">
+                --/--/--
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="flex-grow max-w-4xl w-full mx-auto p-4 pb-24">
+        
+        <!-- Navigation Tabs -->
+        <div class="flex bg-bbDark p-1.5 rounded-2xl mb-6 border border-gray-800/80 shadow-inner">
+            <button onclick="switchTab('timer')" id="tab-timer" class="tab-btn flex-1 py-3 rounded-xl font-extrabold text-sm flex items-center justify-center gap-2 transition-all bg-bbOrange text-white shadow-lg shadow-bbOrange/20">
+                <i class="fa-solid fa-stopwatch text-base"></i>
+                <span>タイマー</span>
+            </button>
+            <button onclick="switchTab('custom')" id="tab-custom" class="tab-btn flex-1 py-3 rounded-xl font-extrabold text-sm flex items-center justify-center gap-2 transition-all text-gray-400 hover:text-white">
+                <i class="fa-solid fa-[#10B981] fa-list-check text-base"></i>
+                <span>メニュー設定</span>
+            </button>
+            <button onclick="switchTab('calendar')" id="tab-calendar" class="tab-btn flex-1 py-3 rounded-xl font-extrabold text-sm flex items-center justify-center gap-2 transition-all text-gray-400 hover:text-white">
+                <i class="fa-regular fa-calendar-check text-base"></i>
+                <span>練習記録</span>
+            </button>
+        </div>
+
+        <!-- 1. TIMER TAB (Menu Integrated Timer) -->
+        <section id="sec-timer" class="tab-content block space-y-6">
+            <div class="bg-bbDark p-5 sm:p-7 rounded-3xl border border-gray-800 shadow-2xl space-y-6">
+                
+                <!-- Menu Selection Header -->
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-bbDarkLight p-4 rounded-2xl border border-gray-800">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">実行する練習メニューを選択</label>
+                        <select id="timerMenuSelect" onchange="loadSelectedMenuToTimer()" class="w-full bg-bbDarkCard text-white font-bold text-base rounded-xl p-3 border border-gray-700 focus:outline-none focus:border-bbOrange transition">
+                            <!-- JS for dynamically loading options -->
+                        </select>
+                    </div>
+                    <div class="flex items-center gap-2 text-xs text-gray-400 self-end sm:self-center">
+                        <span id="menuTotalTimeBadge" class="bg-bbDark px-3 py-1.5 rounded-lg border border-gray-700 font-mono font-bold text-bbOrange">
+                            総時間: 00:00
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Step Progress Visualizer -->
+                <div>
+                    <div class="flex justify-between items-center text-xs font-bold mb-2">
+                        <span id="progressStepText" class="text-gray-400">ステップ 0 / 0</span>
+                        <span id="progressPercentText" class="text-bbOrange font-mono">0%</span>
+                    </div>
+                    <div class="w-full bg-bbDarkLight h-2.5 rounded-full overflow-hidden p-0.5 border border-gray-800">
+                        <div id="progressBar" class="bg-gradient-to-r from-bbOrange to-yellow-400 h-full rounded-full transition-all duration-300 w-0"></div>
+                    </div>
+                </div>
+
+                <!-- Timer Main Display -->
+                <div id="timerDisplayBox" class="py-10 px-4 rounded-3xl bg-bbDarkLight border-4 border-gray-800 text-center transition-all duration-300 relative overflow-hidden shadow-inner">
+                    <!-- Current Step Type Badge -->
+                    <div class="inline-block mb-3">
+                        <span id="timerPhaseBadge" class="px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest bg-gray-800 text-gray-400 border border-gray-700">
+                            READY
+                        </span>
+                    </div>
+
+                    <!-- Current Step Name -->
+                    <h2 id="timerStepTitle" class="text-2xl sm:text-3xl font-black text-white mb-3 min-h-[2.25rem] flex items-center justify-center gap-2">
+                        メニューを選択してください
+                    </h2>
+
+                    <!-- Main Clock -->
+                    <div id="timerClock" class="text-7xl sm:text-8xl font-black font-mono tracking-tight text-white my-2 drop-shadow-md">
+                        00:00
+                    </div>
+
+                    <!-- Next Step Preview -->
+                    <div id="timerNextInfo" class="mt-4 text-xs sm:text-sm font-semibold text-gray-400 bg-bbDark/60 inline-block px-4 py-2 rounded-xl border border-gray-800/80">
+                        次: --
+                    </div>
+                </div>
+
+                <!-- Control Buttons -->
+                <div class="flex justify-center items-center gap-3 sm:gap-4 pt-2">
+                    <button id="btnStartPause" onclick="toggleTimer()" class="flex-1 max-w-[180px] py-4 bg-bbOrange hover:bg-bbOrangeDark text-white font-extrabold rounded-2xl shadow-lg shadow-bbOrange/20 transition active:scale-95 text-lg flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-play" id="iconStartPause"></i>
+                        <span id="textStartPause">スタート</span>
+                    </button>
+                    <button onclick="skipStep()" class="py-4 px-5 bg-bbDarkLight hover:bg-gray-700 text-gray-200 font-bold rounded-2xl border border-gray-700 transition active:scale-95 text-sm flex items-center justify-center gap-2" title="次のステップへスキップ">
+                        <i class="fa-solid fa-forward"></i>
+                        <span class="hidden sm:inline">スキップ</span>
+                    </button>
+                    <button onclick="resetTimer()" class="py-4 px-5 bg-bbDarkLight hover:bg-gray-700 text-gray-300 font-bold rounded-2xl border border-gray-700 transition active:scale-95 text-sm flex items-center justify-center gap-2" title="リセット">
+                        <i class="fa-solid fa-rotate-right"></i>
+                        <span class="hidden sm:inline">リセット</span>
+                    </button>
+                </div>
+
+                <!-- Completion Action Banner (Hidden by default) -->
+                <div id="completionBanner" class="hidden bg-emerald-500/10 border-2 border-emerald-500 p-5 rounded-2xl text-center space-y-3 animate-bounce-short">
+                    <div class="text-emerald-400 font-black text-lg flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-circle-check text-xl"></i>
+                        <span>トレーニング完了！お疲れ様でした！</span>
+                    </div>
+                    <p class="text-xs text-gray-300">このメニューを本日のカレンダー完了記録に追加しますか？</p>
+                    <button onclick="autoRecordCurrentMenu()" class="bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold px-6 py-3 rounded-xl shadow-lg transition text-sm flex items-center justify-center gap-2 mx-auto">
+                        <i class="fa-solid fa-calendar-plus"></i>
+                        <span>本日の練習記録に保存する</span>
+                    </button>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- 2. CUSTOM MENU TAB (Steps Builder) -->
+        <section id="sec-custom" class="tab-content hidden space-y-6">
+            <div class="bg-bbDark p-5 sm:p-7 rounded-3xl border border-gray-800 shadow-2xl space-y-6">
+                <div class="flex justify-between items-center pb-4 border-b border-gray-800">
+                    <div>
+                        <h2 class="text-lg font-extrabold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-sliders text-bbOrange"></i>
+                            練習メニュー＆ステップ設定
+                        </h2>
+                        <p class="text-xs text-gray-400">各メニューごとに運動と休憩の細かなステップを自由にカスタム作成できます</p>
+                    </div>
+                    <button onclick="openMenuModal()" class="bg-bbOrange hover:bg-bbOrangeDark text-white text-xs font-extrabold px-4 py-2.5 rounded-xl transition flex items-center gap-1.5 shadow-lg shadow-bbOrange/20 shrink-0">
+                        <i class="fa-solid fa-plus"></i>
+                        <span>新規メニュー作成</span>
+                    </button>
+                </div>
+
+                <!-- Menu Cards List -->
+                <div id="menuList" class="space-y-4">
+                    <!-- JS for rendering menu cards -->
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. CALENDAR TAB (Records) -->
+        <section id="sec-calendar" class="tab-content hidden space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+                <!-- Calendar View -->
+                <div class="md:col-span-7 bg-bbDark p-5 rounded-3xl border border-gray-800 shadow-xl space-y-4">
+                    <div class="flex justify-between items-center mb-2">
+                        <h2 id="calendarMonthYear" class="text-lg font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-calendar-days text-bbOrange"></i>
+                            2026年 9月
+                        </h2>
+                        <div class="flex gap-2">
+                            <button onclick="changeMonth(-1)" class="p-2 rounded-xl bg-bbDarkLight hover:bg-gray-700 text-gray-300 transition border border-gray-700">
+                                <i class="fa-solid fa-chevron-left"></i>
+                            </button>
+                            <button onclick="changeMonth(1)" class="p-2 rounded-xl bg-bbDarkLight hover:bg-gray-700 text-gray-300 transition border border-gray-700">
+                                <i class="fa-solid fa-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <!-- Weekday Header -->
+                    <div class="grid grid-cols-7 text-center font-extrabold text-xs text-gray-500 py-1">
+                        <span class="text-red-400">日</span>
+                        <span>月</span>
+                        <span>火</span>
+                        <span>水</span>
+                        <span>木</span>
+                        <span>金</span>
+                        <span class="text-blue-400">土</span>
+                    </div>
+                    <!-- Date Grid -->
+                    <div id="calendarGrid" class="grid grid-cols-7 gap-1.5"></div>
+                </div>
+
+                <!-- Selected Day Log View -->
+                <div class="md:col-span-5 bg-bbDark p-5 rounded-3xl border border-gray-800 shadow-xl flex flex-col justify-between space-y-4">
+                    <div>
+                        <div class="flex justify-between items-center mb-4 pb-3 border-b border-gray-800">
+                            <div>
+                                <span id="selectedDateLabel" class="text-base font-extrabold text-bbOrange">選択日の日付</span>
+                                <p class="text-xs text-gray-400">実施したメニュー</p>
+                            </div>
+                            <span id="logStatusBadge" class="text-xs px-3 py-1 rounded-full bg-gray-800 text-gray-400 font-bold">未記録</span>
+                        </div>
+
+                        <!-- Menu Checkbox List -->
+                        <div id="dailyChecklist" class="space-y-2.5 max-h-64 overflow-y-auto pr-1">
+                            <!-- JS Generated -->
+                        </div>
+                    </div>
+
+                    <!-- Note Field & Save Button -->
+                    <div class="pt-3 border-t border-gray-800 space-y-3">
+                        <textarea id="dailyNote" rows="2" placeholder="本日のメモ（調子、反省点、シュート成功率など）..." class="w-full bg-bbDarkLight text-sm rounded-xl p-3 border border-gray-700 focus:outline-none focus:border-bbOrange text-white resize-none"></textarea>
+                        <button onclick="saveDailyLog()" class="w-full bg-bbOrange hover:bg-bbOrangeDark text-white font-extrabold py-3.5 rounded-xl transition shadow-lg shadow-bbOrange/20 flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-floppy-disk"></i>
+                            <span>記録を保存する</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Menu Create/Edit Modal Dialog -->
+    <div id="menuModal" class="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 hidden backdrop-blur-sm">
+        <div class="bg-bbDark w-full max-w-xl rounded-3xl p-6 border border-gray-800 shadow-2xl space-y-5 max-h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center pb-3 border-b border-gray-800">
+                <h3 id="modalTitle" class="text-lg font-extrabold text-white">メニュー編集</h3>
+                <button onclick="closeMenuModal()" class="text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            
+            <input type="hidden" id="editMenuId">
+            
+            <div class="overflow-y-auto space-y-4 pr-1 flex-grow">
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 mb-1">メニュータイトル</label>
+                    <input type="text" id="menuTitleInput" placeholder="例: ドリブル基本セット①" class="w-full bg-bbDarkLight text-white font-bold rounded-xl p-3 border border-gray-700 focus:outline-none focus:border-bbOrange text-sm">
+                </div>
+
+                <!-- Steps Builder Container -->
+                <div>
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="block text-xs font-bold text-gray-400">ステップ構成 (順番にカウントダウンされます)</label>
+                        <button type="button" onclick="addStepRow()" class="text-xs text-bbOrange font-bold hover:underline flex items-center gap-1">
+                            <i class="fa-solid fa-plus-circle"></i> ステップ追加
+                        </button>
+                    </div>
+                    
+                    <div id="stepsContainer" class="space-y-2.5">
+                        <!-- Step Rows JS Generated -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex gap-3 pt-3 border-t border-gray-800">
+                <button onclick="closeMenuModal()" class="flex-1 py-3 bg-gray-800 hover:bg-gray-700 text-gray-300 font-bold text-sm rounded-xl transition">キャンセル</button>
+                <button onclick="saveMenu()" class="flex-1 py-3 bg-bbOrange hover:bg-bbOrangeDark text-white font-bold text-sm rounded-xl transition shadow-lg shadow-bbOrange/20">保存する</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-gray-900 border border-bbOrange text-white text-xs px-5 py-3 rounded-full shadow-2xl transition-all duration-300 opacity-0 pointer-events-none z-50 flex items-center gap-2.5">
+        <i class="fa-solid fa-circle-check text-bbOrange text-sm"></i>
+        <span id="toastMsg">保存完了しました</span>
+    </div>
+
+    <script>
+        // --- Initial Mock Data ---
+        const DEFAULT_MENUS = [
+            {
+                id: 'm1',
+                title: 'ドリブル基礎トレーニング①',
+                steps: [
+                    { name: '右手パウンドドリブル', type: 'WORK', time: 30 },
+                    { name: '休憩', type: 'REST', time: 10 },
+                    { name: '左手パウンドドリブル', type: 'WORK', time: 30 },
+                    { name: '休憩', type: 'REST', time: 10 },
+                    { name: 'フロントチェンジ', type: 'WORK', time: 30 }
+                ]
+            },
+            {
+                id: 'm2',
+                title: 'シュート＆ダッシュセット',
+                steps: [
+                    { name: 'ゴール下シュート(右)', type: 'WORK', time: 45 },
+                    { name: '休憩', type: 'REST', time: 15 },
+                    { name: 'ゴール下シュート(左)', type: 'WORK', time: 45 },
+                    { name: '休憩', type: 'REST', time: 15 },
+                    { name: 'ダッシュ＆バックペダル', type: 'WORK', time: 30 }
+                ]
+            }
+        ];
+
+        let menuList = JSON.parse(localStorage.getItem('hoop_step_menus')) || DEFAULT_MENUS;
+        let dailyLogs = JSON.parse(localStorage.getItem('hoop_step_logs')) || {};
+
+        // Active State Variables
+        let currentDate = new Date();
+        let selectedDateStr = formatDate(new Date());
+
+        // Timer Engine Variables
+        let timerInterval = null;
+        let isRunning = false;
+        let activeMenu = null;
+        let currentStepIndex = 0;
+        let remainingSeconds = 0;
+
+        // --- Initialization ---
+        window.onload = function() {
+            const today = new Date();
+            document.getElementById('todayBadge').textContent = `${today.getFullYear()}/${today.getMonth()+1}/${today.getDate()}`;
+            
+            renderCalendar();
+            selectDate(selectedDateStr);
+            renderMenuList();
+            populateTimerMenuSelect();
+        };
+
+        // --- Tab Switcher ---
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(el => {
+                el.classList.remove('bg-bbOrange', 'text-white', 'shadow-lg', 'shadow-bbOrange/20');
+                el.classList.add('text-gray-400');
+            });
+
+            document.getElementById(`sec-${tabName}`).classList.remove('hidden');
+            const activeBtn = document.getElementById(`tab-${tabName}`);
+            activeBtn.classList.add('bg-bbOrange', 'text-white', 'shadow-lg', 'shadow-bbOrange/20');
+            activeBtn.classList.remove('text-gray-400');
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMsg').textContent = msg;
+            toast.classList.remove('opacity-0', 'pointer-events-none');
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'pointer-events-none');
+            }, 2500);
+        }
+
+        // --- Date Helpers ---
+        function formatDate(date) {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
+        // --- Web Audio API (Sound Synthesizer) ---
+        let audioCtx = null;
+
+        function playBeep(freq = 880, duration = 0.15) {
+            try {
+                if (!audioCtx) {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+
+                gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration);
+            } catch (e) {
+                console.log('Audio Error:', e);
+            }
+        }
+
+        // --- TIMER ENGINE ---
+        function populateTimerMenuSelect() {
+            const select = document.getElementById('timerMenuSelect');
+            select.innerHTML = '';
+
+            if (menuList.length === 0) {
+                select.innerHTML = '<option value="">登録済みメニューがありません</option>';
+                resetTimerUIEmpty();
+                return;
+            }
+
+            menuList.forEach(m => {
+                const opt = document.createElement('option');
+                opt.value = m.id;
+                opt.textContent = m.title;
+                select.appendChild(opt);
+            });
+
+            loadSelectedMenuToTimer();
+        }
+
+        function loadSelectedMenuToTimer() {
+            const selectedId = document.getElementById('timerMenuSelect').value;
+            activeMenu = menuList.find(m => m.id === selectedId) || null;
+
+            resetTimer();
+        }
+
+        function resetTimerUIEmpty() {
+            document.getElementById('timerStepTitle').textContent = 'メニューを選択してください';
+            document.getElementById('timerClock').textContent = '00:00';
+            document.getElementById('timerNextInfo').textContent = '次: --';
+            document.getElementById('menuTotalTimeBadge').textContent = '総時間: 00:00';
+            document.getElementById('progressBar').style.width = '0%';
+            document.getElementById('progressStepText').textContent = 'ステップ 0 / 0';
+            document.getElementById('progressPercentText').textContent = '0%';
+        }
+
+        function resetTimer() {
+            clearInterval(timerInterval);
+            timerInterval = null;
+            isRunning = false;
+
+            document.getElementById('completionBanner').classList.add('hidden');
+            document.getElementById('textStartPause').textContent = 'スタート';
+            document.getElementById('iconStartPause').className = 'fa-solid fa-play';
+
+            if (!activeMenu || !activeMenu.steps || activeMenu.steps.length === 0) {
+                resetTimerUIEmpty();
+                return;
+            }
+
+            currentStepIndex = 0;
+            remainingSeconds = activeMenu.steps[0].time;
+
+            // Compute total menu duration
+            const totalSec = activeMenu.steps.reduce((acc, curr) => acc + parseInt(curr.time || 0), 0);
+            const tm = String(Math.floor(totalSec / 60)).padStart(2, '0');
+            const ts = String(totalSec % 60).padStart(2, '0');
+            document.getElementById('menuTotalTimeBadge').textContent = `総時間: ${tm}:${ts}`;
+
+            updateTimerDisplay();
+        }
+
+        function toggleTimer() {
+            if (!activeMenu || activeMenu.steps.length === 0) {
+                showToast('メニューが正しく選択されていません');
+                return;
+            }
+
+            if (isRunning) {
+                pauseTimer();
+            } else {
+                startTimer();
+            }
+        }
+
+        function startTimer() {
+            if (currentStepIndex >= activeMenu.steps.length) {
+                resetTimer();
+            }
+
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+
+            isRunning = true;
+            document.getElementById('textStartPause').textContent = '一時停止';
+            document.getElementById('iconStartPause').className = 'fa-solid fa-pause';
+
+            // Initial start sound
+            playBeep(600, 0.15);
+
+            timerInterval = setInterval(() => {
+                remainingSeconds--;
+
+                if (remainingSeconds < 0) {
+                    // Step transition
+                    currentStepIndex++;
+                    if (currentStepIndex < activeMenu.steps.length) {
+                        remainingSeconds = activeMenu.steps[currentStepIndex].time;
+                        const nextType = activeMenu.steps[currentStepIndex].type;
+                        // Higher pitch for WORK, lower for REST
+                        playBeep(nextType === 'WORK' ? 1000 : 500, 0.35);
+                    } else {
+                        // All Steps Completed
+                        clearInterval(timerInterval);
+                        timerInterval = null;
+                        isRunning = false;
+                        playBeep(1200, 0.6);
+                        document.getElementById('completionBanner').classList.remove('hidden');
+                        document.getElementById('textStartPause').textContent = 'スタート';
+                        document.getElementById('iconStartPause').className = 'fa-solid fa-play';
+                    }
+                } else if (remainingSeconds <= 3 && remainingSeconds > 0) {
+                    playBeep(880, 0.1);
+                }
+
+                updateTimerDisplay();
+            }, 1000);
+        }
+
+        function pauseTimer() {
+            clearInterval(timerInterval);
+            timerInterval = null;
+            isRunning = false;
+            document.getElementById('textStartPause').textContent = '再開';
+            document.getElementById('iconStartPause').className = 'fa-solid fa-play';
+        }
+
+        function skipStep() {
+            if (!activeMenu || !activeMenu.steps || currentStepIndex >= activeMenu.steps.length) return;
+            
+            currentStepIndex++;
+            if (currentStepIndex < activeMenu.steps.length) {
+                remainingSeconds = activeMenu.steps[currentStepIndex].time;
+                playBeep(700, 0.1);
+            } else {
+                clearInterval(timerInterval);
+                timerInterval = null;
+                isRunning = false;
+                document.getElementById('completionBanner').classList.remove('hidden');
+            }
+            updateTimerDisplay();
+        }
+
+        function updateTimerDisplay() {
+            if (!activeMenu || !activeMenu.steps || activeMenu.steps.length === 0) return;
+
+            const totalSteps = activeMenu.steps.length;
+            const displayBox = document.getElementById('timerDisplayBox');
+            const phaseBadge = document.getElementById('timerPhaseBadge');
+            const stepTitle = document.getElementById('timerStepTitle');
+            const clock = document.getElementById('timerClock');
+            const nextInfo = document.getElementById('timerNextInfo');
+
+            if (currentStepIndex >= totalSteps) {
+                // Completed state
+                phaseBadge.textContent = 'FINISH';
+                phaseBadge.className = 'px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
+                stepTitle.textContent = '🎉 全ステップ完了！';
+                clock.textContent = '00:00';
+                nextInfo.textContent = 'お疲れ様でした！';
+                displayBox.className = 'py-10 px-4 rounded-3xl bg-emerald-500/10 border-4 border-emerald-500 text-center transition-all duration-300 relative overflow-hidden shadow-inner';
+                
+                document.getElementById('progressBar').style.width = '100%';
+                document.getElementById('progressStepText').textContent = `ステップ ${totalSteps} / ${totalSteps}`;
+                document.getElementById('progressPercentText').textContent = '100%';
+                return;
+            }
+
+            const step = activeMenu.steps[currentStepIndex];
+            stepTitle.textContent = step.name || (step.type === 'WORK' ? '運動' : '休憩');
+
+            // Formatted clock
+            const m = String(Math.floor(remainingSeconds / 60)).padStart(2, '0');
+            const s = String(remainingSeconds % 60).padStart(2, '0');
+            clock.textContent = `${m}:${s}`;
+
+            // Phase styling
+            if (step.type === 'WORK') {
+                phaseBadge.textContent = '🔥 WORK';
+                phaseBadge.className = 'px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest bg-bbOrange/20 text-bbOrange border border-bbOrange/30';
+                displayBox.className = 'py-10 px-4 rounded-3xl bg-bbOrange/10 border-4 border-bbOrange text-center transition-all duration-300 relative overflow-hidden shadow-inner';
+            } else {
+                phaseBadge.textContent = '☕ REST';
+                phaseBadge.className = 'px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest bg-bbRest/20 text-bbRest border border-bbRest/30';
+                displayBox.className = 'py-10 px-4 rounded-3xl bg-bbRest/10 border-4 border-bbRest text-center transition-all duration-300 relative overflow-hidden shadow-inner';
+            }
+
+            // Next step preview
+            if (currentStepIndex + 1 < totalSteps) {
+                const nextStep = activeMenu.steps[currentStepIndex + 1];
+                nextInfo.textContent = `次: ${nextStep.name} (${nextStep.time}秒)`;
+            } else {
+                nextInfo.textContent = '次: 完了！';
+            }
+
+            // Progress bar calculation
+            const progressRatio = (currentStepIndex / totalSteps) * 100;
+            document.getElementById('progressBar').style.width = `${progressRatio}%`;
+            document.getElementById('progressStepText').textContent = `ステップ ${currentStepIndex + 1} / ${totalSteps}`;
+            document.getElementById('progressPercentText').textContent = `${Math.round(progressRatio)}%`;
+        }
+
+        function autoRecordCurrentMenu() {
+            if (!activeMenu) return;
+
+            const todayStr = formatDate(new Date());
+            const log = dailyLogs[todayStr] || { completedMenus: [], note: '' };
+
+            if (!log.completedMenus.includes(activeMenu.id)) {
+                log.completedMenus.push(activeMenu.id);
+            }
+
+            dailyLogs[todayStr] = log;
+            localStorage.setItem('hoop_step_logs', JSON.stringify(dailyLogs));
+
+            showToast(`「${activeMenu.title}」を本日の完了記録に保存しました！`);
+            document.getElementById('completionBanner').classList.add('hidden');
+            
+            selectDate(selectedDateStr);
+            renderCalendar();
+        }
+
+        // --- CUSTOM MENU BUILDER ---
+        function renderMenuList() {
+            const container = document.getElementById('menuList');
+            container.innerHTML = '';
+
+            if (menuList.length === 0) {
+                container.innerHTML = '<p class="text-xs text-gray-500 py-8 text-center">メニューがありません。「新規メニュー作成」から追加してください。</p>';
+                return;
+            }
+
+            menuList.forEach(m => {
+                const totalSec = m.steps ? m.steps.reduce((acc, c) => acc + parseInt(c.time || 0), 0) : 0;
+                const tm = Math.floor(totalSec / 60);
+                const ts = totalSec % 60;
+
+                const card = document.createElement('div');
+                card.className = 'bg-bbDarkLight p-5 rounded-2xl border border-gray-800 space-y-3';
+                
+                let stepsHtml = '';
+                if (m.steps && m.steps.length > 0) {
+                    stepsHtml = m.steps.map((st, i) => `
+                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold ${st.type === 'WORK' ? 'bg-bbOrange/10 text-bbOrange border border-bbOrange/20' : 'bg-bbRest/10 text-bbRest border border-bbRest/20'}">
+                            ${st.name} (${st.time}s)
+                        </span>
+                    `).join('');
+                }
+
+                card.innerHTML = `
+                    <div class="flex justify-between items-start gap-2">
+                        <div>
+                            <h4 class="font-extrabold text-white text-base">${escapeHtml(m.title)}</h4>
+                            <p class="text-xs text-gray-400 mt-0.5">全 ${m.steps ? m.steps.length : 0} ステップ • 約 ${tm > 0 ? tm + '分' : ''}${ts}秒</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="openMenuModal('${m.id}')" class="p-2 text-gray-300 hover:text-white bg-bbDark rounded-xl border border-gray-700 transition">
+                                <i class="fa-solid fa-pen-to-square text-xs"></i>
+                            </button>
+                            <button onclick="deleteMenu('${m.id}')" class="p-2 text-red-400 hover:text-red-300 bg-bbDark rounded-xl border border-gray-700 transition">
+                                <i class="fa-solid fa-trash-can text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap gap-1.5 pt-1">
+                        ${stepsHtml}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function openMenuModal(editId = null) {
+            document.getElementById('editMenuId').value = editId || '';
+            const stepsContainer = document.getElementById('stepsContainer');
+            stepsContainer.innerHTML = '';
+
+            if (editId) {
+                const m = menuList.find(x => x.id === editId);
+                document.getElementById('modalTitle').textContent = 'メニュー編集';
+                document.getElementById('menuTitleInput').value = m.title;
+
+                if (m.steps && m.steps.length > 0) {
+                    m.steps.forEach(st => addStepRow(st.name, st.type, st.time));
+                } else {
+                    addStepRow();
+                }
+            } else {
+                document.getElementById('modalTitle').textContent = '新規メニュー作成';
+                document.getElementById('menuTitleInput').value = '';
+                // Default 3 sample step rows
+                addStepRow('右手パウンドドリブル', 'WORK', 30);
+                addStepRow('休憩', 'REST', 10);
+                addStepRow('左手パウンドドリブル', 'WORK', 30);
+            }
+            document.getElementById('menuModal').classList.remove('hidden');
+        }
+
+        function closeMenuModal() {
+            document.getElementById('menuModal').classList.add('hidden');
+        }
+
+        function addStepRow(name = '', type = 'WORK', time = 30) {
+            const container = document.getElementById('stepsContainer');
+            const row = document.createElement('div');
+            row.className = 'step-row flex items-center gap-2 bg-bbDarkCard p-2.5 rounded-xl border border-gray-700/80';
+            row.innerHTML = `
+                <select class="step-type bg-bbDark text-white text-xs font-bold rounded-lg p-2 border border-gray-700 focus:outline-none">
+                    <option value="WORK" ${type === 'WORK' ? 'selected' : ''}>🔥 運動</option>
+                    <option value="REST" ${type === 'REST' ? 'selected' : ''}>☕ 休憩</option>
+                </select>
+                <input type="text" value="${escapeHtml(name)}" placeholder="ステップ名 (例: 右手ドリル)" class="step-name flex-1 bg-bbDark text-white text-xs font-semibold rounded-lg p-2 border border-gray-700 focus:outline-none">
+                <div class="flex items-center gap-1">
+                    <input type="number" value="${time}" min="1" max="600" class="step-time w-16 bg-bbDark text-center text-white text-xs font-bold rounded-lg p-2 border border-gray-700 focus:outline-none">
+                    <span class="text-xs text-gray-400 font-semibold">秒</span>
+                </div>
+                <button type="button" onclick="this.parentElement.remove()" class="p-1.5 text-gray-400 hover:text-red-400">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            `;
+            container.appendChild(row);
+        }
+
+        function saveMenu() {
+            const id = document.getElementById('editMenuId').value;
+            const title = document.getElementById('menuTitleInput').value.trim();
+
+            if (!title) {
+                alert('メニュータイトルを入力してください');
+                return;
+            }
+
+            const stepRows = document.querySelectorAll('.step-row');
+            const steps = [];
+
+            stepRows.forEach(row => {
+                const name = row.querySelector('.step-name').value.trim() || 'ステップ';
+                const type = row.querySelector('.step-type').value;
+                const time = parseInt(row.querySelector('.step-time').value) || 10;
+                steps.push({ name, type, time });
+            });
+
+            if (steps.length === 0) {
+                alert('少なくとも1つのステップを追加してください');
+                return;
+            }
+
+            if (id) {
+                const idx = menuList.findIndex(x => x.id === id);
+                if (idx !== -1) {
+                    menuList[idx] = { id, title, steps };
+                }
+            } else {
+                menuList.push({
+                    id: 'm_' + Date.now(),
+                    title,
+                    steps
+                });
+            }
+
+            localStorage.setItem('hoop_step_menus', JSON.stringify(menuList));
+            renderMenuList();
+            populateTimerMenuSelect();
+            selectDate(selectedDateStr);
+            closeMenuModal();
+            showToast(id ? 'メニューを改定しました' : '新メニューを作成しました');
+        }
+
+        function deleteMenu(id) {
+            if (confirm('この練習メニューを削除してもよろしいですか？')) {
+                menuList = menuList.filter(x => x.id !== id);
+                localStorage.setItem('hoop_step_menus', JSON.stringify(menuList));
+                renderMenuList();
+                populateTimerMenuSelect();
+                selectDate(selectedDateStr);
+                showToast('メニューを削除しました');
+            }
+        }
+
+        // --- CALENDAR & LOGS ---
+        function renderCalendar() {
+            const grid = document.getElementById('calendarGrid');
+            grid.innerHTML = '';
+
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+
+            document.getElementById('calendarMonthYear').innerHTML = `
+                <i class="fa-solid fa-calendar-days text-bbOrange"></i>
+                ${year}年 ${month + 1}月
+            `;
+
+            const firstDay = new Date(year, month, 1).getDay();
+            const lastDate = new Date(year, month + 1, 0).getDate();
+
+            for (let i = 0; i < firstDay; i++) {
+                const emptyCell = document.createElement('div');
+                emptyCell.className = 'h-10';
+                grid.appendChild(emptyCell);
+            }
+
+            for (let d = 1; d <= lastDate; d++) {
+                const dateObj = new Date(year, month, d);
+                const dateStr = formatDate(dateObj);
+                const hasLog = dailyLogs[dateStr] && dailyLogs[dateStr].completedMenus && dailyLogs[dateStr].completedMenus.length > 0;
+                const isSelected = dateStr === selectedDateStr;
+
+                const btn = document.createElement('button');
+                btn.onclick = () => selectDate(dateStr);
+                
+                let bgClass = 'bg-bbDarkLight hover:bg-gray-700 text-gray-300';
+                if (isSelected) {
+                    bgClass = 'bg-bbOrange text-white font-black ring-2 ring-white';
+                }
+
+                btn.className = `h-10 rounded-xl flex flex-col items-center justify-center relative transition text-xs ${bgClass}`;
+                btn.innerHTML = `
+                    <span>${d}</span>
+                    ${hasLog ? '<span class="w-2 h-2 rounded-full bg-bbAccent absolute bottom-1 shadow-sm"></span>' : ''}
+                `;
+                grid.appendChild(btn);
+            }
+        }
+
+        function changeMonth(delta) {
+            currentDate.setMonth(currentDate.getMonth() + delta);
+            renderCalendar();
+        }
+
+        function selectDate(dateStr) {
+            selectedDateStr = dateStr;
+            renderCalendar();
+
+            const parts = dateStr.split('-');
+            document.getElementById('selectedDateLabel').textContent = `${parts[0]}年${parseInt(parts[1])}月${parseInt(parts[2])}日`;
+
+            const log = dailyLogs[dateStr] || { completedMenus: [], note: '' };
+            const container = document.getElementById('dailyChecklist');
+            container.innerHTML = '';
+
+            if (menuList.length === 0) {
+                container.innerHTML = '<p class="text-xs text-gray-500 py-4 text-center">メニューが登録されていません</p>';
+            } else {
+                menuList.forEach(m => {
+                    const isChecked = log.completedMenus.includes(m.id);
+                    const item = document.createElement('label');
+                    item.className = `flex items-center gap-3 p-3 rounded-xl border transition cursor-pointer ${isChecked ? 'bg-bbOrange/10 border-bbOrange/50' : 'bg-bbDarkLight border-gray-800'}`;
+                    item.innerHTML = `
+                        <input type="checkbox" value="${m.id}" ${isChecked ? 'checked' : ''} class="w-4 h-4 rounded text-bbOrange focus:ring-0 cursor-pointer">
+                        <div class="flex-1">
+                            <div class="text-sm font-bold text-white">${escapeHtml(m.title)}</div>
+                            <div class="text-xs text-gray-400">${m.steps ? m.steps.length : 0} ステップ</div>
+                        </div>
+                    `;
+                    container.appendChild(item);
+                });
+            }
+
+            document.getElementById('dailyNote').value = log.note || '';
+
+            const badge = document.getElementById('logStatusBadge');
+            if (log.completedMenus && log.completedMenus.length > 0) {
+                badge.className = 'text-xs px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-bold';
+                badge.textContent = `${log.completedMenus.length}個完了`;
+            } else {
+                badge.className = 'text-xs px-3 py-1 rounded-full bg-gray-800 text-gray-400 font-bold';
+                badge.textContent = '未記録';
+            }
+        }
+
+        function saveDailyLog() {
+            const checkedIds = Array.from(document.querySelectorAll('#dailyChecklist input[type="checkbox"]:checked')).map(cb => cb.value);
+            const note = document.getElementById('dailyNote').value.trim();
+
+            dailyLogs[selectedDateStr] = {
+                completedMenus: checkedIds,
+                note: note
+            };
+
+            localStorage.setItem('hoop_step_logs', JSON.stringify(dailyLogs));
+            renderCalendar();
+            selectDate(selectedDateStr);
+            showToast('練習記録を保存しました！');
+        }
+
+        // --- Escape Utility ---
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/&/g, '&amp;')
+                      .replace(/</g, '&lt;')
+                      .replace(/>/g, '&gt;')
+                      .replace(/"/g, '&quot;')
+                      .replace(/'/g, '&#039;');
+        }
+    </script>
+</body>
+</html>
