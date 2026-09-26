@@ -3,131 +3,98 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>バスケットボール練習＆タイマー</title>
+  <title>バスケットボール練習アプリ</title>
   <link rel="manifest" href="./manifest.json">
-  <meta name="theme-color" content="#ea580c">
+  <meta name="theme-color" content="#2563eb">
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body { -webkit-tap-highlight-color: transparent; }
-    .active-tab { border-b-2 border-orange-500 text-orange-500 font-bold; }
+    .active-tab { border-b-2 border-blue-600 text-blue-600 font-bold; }
   </style>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen pb-20">
+<body class="bg-gray-100 text-gray-800 min-h-screen pb-20">
 
   <!-- ヘッダー -->
-  <header class="bg-slate-800 border-b border-slate-700 p-4 sticky top-0 z-10 flex justify-between items-center shadow-md">
-    <h1 class="text-xl font-extrabold text-orange-500 flex items-center gap-2">
-      🏀 バスケ練習アシスト
-    </h1>
-    <span id="pwa-status" class="text-xs bg-emerald-900 text-emerald-300 px-2 py-1 rounded-full border border-emerald-700">準備完了</span>
+  <header class="bg-white border-b border-gray-200 p-4 sticky top-0 z-10 flex justify-between items-center shadow-sm">
+    <h1 class="text-xl font-bold text-blue-600">🏀 バスケ練習ノート</h1>
+    <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">プロトタイプ</span>
   </header>
 
   <!-- タブナビゲーション -->
-  <nav class="flex bg-slate-800 border-b border-slate-700 sticky top-[61px] z-10 text-sm text-slate-400">
-    <button onclick="switchTab('timer')" id="tab-timer" class="flex-1 py-3 text-center active-tab">⏱️ タイマー</button>
+  <nav class="flex bg-white border-b border-gray-200 sticky top-[57px] z-10 text-sm text-gray-500">
+    <button onclick="switchTab('calendar')" id="tab-calendar" class="flex-1 py-3 text-center active-tab">📅 練習記録</button>
     <button onclick="switchTab('menu')" id="tab-menu" class="flex-1 py-3 text-center">⚙️ メニュー設定</button>
-    <button onclick="switchTab('calendar')" id="tab-calendar" class="flex-1 py-3 text-center">📅 練習記録</button>
-    <button onclick="switchTab('settings')" id="tab-settings" class="flex-1 py-3 text-center">📂 設定</button>
+    <button onclick="switchTab('timer')" id="tab-timer" class="flex-1 py-3 text-center">⏱️ タイマー</button>
+    <button onclick="switchTab('settings')" id="tab-settings" class="flex-1 py-3 text-center">📂 データ移行</button>
   </nav>
 
-  <!-- メインコンテンツエリア -->
+  <!-- メインコンテンツ -->
   <main class="p-4 max-w-lg mx-auto">
 
-    <!-- 1. タイマー画面 -->
-    <section id="sec-timer" class="block space-y-6">
-      <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 shadow-lg">
-        <label class="block text-sm font-medium text-slate-400 mb-2">練習メニューを選択:</label>
-        <select id="timer-menu-select" onchange="loadSelectedMenuToTimer()" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-orange-400 font-bold focus:outline-none focus:border-orange-500">
-        </select>
+    <!-- 1. カレンダー・練習記録 -->
+    <section id="sec-calendar" class="block space-y-4">
+      <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+        <label class="block text-sm font-medium text-gray-700 mb-1">日付を選択:</label>
+        <input type="date" id="calendar-date-picker" onchange="renderCalendar()" class="bg-gray-50 border border-gray-300 text-gray-900 rounded-lg p-2 w-full focus:outline-none focus:border-blue-500">
       </div>
 
-      <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl text-center space-y-4">
-        <div class="flex justify-between items-center text-xs text-slate-400">
-          <span id="current-step-type" class="bg-orange-500/20 text-orange-400 px-3 py-1 rounded-full border border-orange-500/30">運動</span>
-          <span id="step-progress" class="font-mono">ステップ 1 / 1</span>
-        </div>
-
-        <h2 id="current-step-title" class="text-2xl font-bold text-white min-h-[2rem] flex items-center justify-center">
-          メニューを選択してください
-        </h2>
-
-        <div class="py-4">
-          <div id="timer-display" class="text-7xl font-extrabold font-mono text-orange-500 tracking-wider">
-            00:00
-          </div>
-        </div>
-
-        <div class="w-full bg-slate-700 h-2 rounded-full overflow-hidden">
-          <div id="timer-progress-bar" class="bg-orange-500 h-full w-full transition-all duration-300"></div>
-        </div>
-
-        <div class="text-sm text-slate-400 min-h-[1.5rem]" id="next-step-preview">
-          次: なし
-        </div>
-
-        <div class="grid grid-cols-3 gap-3 pt-4">
-          <button id="btn-start" onclick="toggleTimer()" class="col-span-2 bg-orange-600 hover:bg-orange-500 active:bg-orange-700 text-white font-extrabold py-4 rounded-xl shadow-lg text-lg transition-colors">
-            START
-          </button>
-          <button onclick="resetTimer()" class="bg-slate-700 hover:bg-slate-600 text-slate-200 font-bold py-4 rounded-xl shadow">
-            リセット
-          </button>
-        </div>
-
-        <button onclick="nextStep()" class="w-full bg-slate-700/50 hover:bg-slate-700 text-slate-300 py-2 rounded-lg text-xs">
-          スキップ (次のステップへ) ⏭️
-        </button>
-
-        <div id="finish-action" class="hidden pt-4 border-t border-slate-700">
-          <p class="text-emerald-400 font-bold mb-2">🎉 全ステップが完了しました！</p>
-          <button onclick="markCurrentMenuAsDone()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl shadow-lg">
-            本日のカレンダーに記録する 📝
-          </button>
-        </div>
-      </div>
-    </section>
-
-    <!-- 2. メニュー設定画面 -->
-    <section id="sec-menu" class="hidden space-y-6">
-      <div class="flex justify-between items-center">
-        <h2 class="text-lg font-bold text-white">メニュー一覧・編集</h2>
-        <button onclick="addNewMenuPrompt()" class="bg-orange-600 hover:bg-orange-500 text-white px-3 py-1.5 rounded-lg text-sm font-bold shadow">
-          ＋ 新規メニュー
-        </button>
-      </div>
-      <div id="menu-list-container" class="space-y-4"></div>
-    </section>
-
-    <!-- 3. カレンダー記録画面 -->
-    <section id="sec-calendar" class="hidden space-y-6">
-      <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 shadow-md">
-        <label class="block text-sm font-medium text-slate-400 mb-1">日付を選択:</label>
-        <input type="date" id="calendar-date-picker" onchange="renderCalendarRecords()" class="bg-slate-900 border border-slate-700 text-white rounded-lg p-2 w-full focus:outline-none focus:border-orange-500">
-      </div>
-      <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 shadow-md space-y-3">
-        <h3 class="text-md font-bold text-orange-400" id="selected-date-label">選択した日の記録</h3>
+      <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 space-y-3">
+        <h2 class="font-bold text-gray-800 border-b pb-2" id="selected-date-label">選択した日の記録</h2>
         <div id="calendar-checklist" class="space-y-2"></div>
       </div>
     </section>
 
-    <!-- 4. 設定画面（データバックアップ/復元） -->
-    <section id="sec-settings" class="hidden space-y-6">
-      <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 shadow-md space-y-4">
-        <h2 class="text-lg font-bold text-orange-400 flex items-center gap-2">
-          📂 データバックアップ / 移行
-        </h2>
-        <p class="text-xs text-slate-400 leading-relaxed">
-          PCで作成した練習メニューをファイルとして出力し、スマホ側で読み込むことで簡単にデータを同期できます。
+    <!-- 2. メニュー設定 -->
+    <section id="sec-menu" class="hidden space-y-4">
+      <div class="flex justify-between items-center">
+        <h2 class="font-bold text-gray-800">練習メニュー一覧</h2>
+        <button onclick="addNewMenu()" class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-lg text-sm font-bold shadow-sm">
+          ＋ メニュー追加
+        </button>
+      </div>
+      <div id="menu-list" class="space-y-3"></div>
+    </section>
+
+    <!-- 3. タイマー -->
+    <section id="sec-timer" class="hidden space-y-4">
+      <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 text-center space-y-4">
+        <div class="text-sm font-medium text-blue-600" id="timer-status">準備完了</div>
+        <div id="timer-display" class="text-6xl font-extrabold font-mono text-gray-800 tracking-wider">
+          00:30
+        </div>
+
+        <div class="grid grid-cols-2 gap-2 text-xs text-left bg-gray-50 p-3 rounded-lg border border-gray-200">
+          <div>運動時間: <input type="number" id="cfg-work" value="30" class="w-12 border rounded text-center"> 秒</div>
+          <div>休憩時間: <input type="number" id="cfg-rest" value="5" class="w-12 border rounded text-center"> 秒</div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 pt-2">
+          <button id="btn-timer-start" onclick="toggleTimer()" class="bg-blue-600 text-white font-bold py-3 rounded-lg shadow">
+            スタート
+          </button>
+          <button onclick="resetTimer()" class="bg-gray-200 text-gray-700 font-bold py-3 rounded-lg">
+            リセット
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. データ移行（追加機能） -->
+    <section id="sec-settings" class="hidden space-y-4">
+      <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-200 space-y-4">
+        <h2 class="font-bold text-gray-800 border-b pb-2">📂 PCとスマホのデータ同期</h2>
+        <p class="text-xs text-gray-600 leading-relaxed">
+          PCで編集したメニューをファイルとして出力し、スマホで読み込むことでデータを共通化できます。
         </p>
 
         <div class="space-y-3 pt-2">
-          <button onclick="exportData()" class="w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 px-4 rounded-xl border border-slate-600 flex items-center justify-center gap-2 shadow">
-            📥 バックアップファイルをダウンロード
+          <button onclick="exportData()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 px-4 rounded-lg shadow-sm text-sm">
+            📥 PCのデータを書き出す（保存）
           </button>
 
-          <div>
-            <label class="block text-xs font-medium text-slate-400 mb-1">復元するファイルを選択 (.json):</label>
-            <input type="file" id="import-file" accept=".json" onchange="importData(event)" class="block w-full text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-orange-600 file:text-white hover:file:bg-orange-500 cursor-pointer border border-slate-700 rounded-lg bg-slate-900">
+          <div class="border-t pt-3">
+            <label class="block text-xs font-medium text-gray-700 mb-1">スマホで読み込む (.jsonファイル):</label>
+            <input type="file" id="import-file" accept=".json" onchange="importData(event)" class="block w-full text-xs text-gray-500 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200 border rounded-lg bg-gray-50">
           </div>
         </div>
       </div>
@@ -137,233 +104,36 @@
 
   <script>
     const DEFAULT_MENUS = [
-      {
-        id: 'menu_1',
-        title: 'ドリブル基礎①',
-        steps: [
-          { name: '右手パワーパウンド', duration: 30, type: 'work' },
-          { name: '休憩', duration: 10, type: 'rest' },
-          { name: '左手パワーパウンド', duration: 30, type: 'work' },
-          { name: '休憩', duration: 10, type: 'rest' },
-          { name: 'フロントチェンジ', duration: 30, type: 'work' }
-        ]
-      }
+      { id: 'm1', title: 'ドリブル練習①', detail: '右手30秒 / 休憩5秒 / 左手30秒' },
+      { id: 'm2', title: 'シュート練習①', detail: 'ゴール下10本 / ミドル10本' }
     ];
 
-    let menus = JSON.parse(localStorage.getItem('basket_menus')) || DEFAULT_MENUS;
-    let records = JSON.parse(localStorage.getItem('basket_records')) || {};
-
-    let currentMenu = null;
-    let currentStepIndex = 0;
-    let timerSeconds = 0;
-    let timerInterval = null;
-    let isRunning = false;
-
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    function playBeep(freq = 440, duration = 0.15) {
-      if (audioCtx.state === 'suspended') audioCtx.resume();
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.frequency.value = freq;
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-      osc.start();
-      gain.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + duration);
-      osc.stop(audioCtx.currentTime + duration);
-    }
+    let menus = JSON.parse(localStorage.getItem('bk_menus')) || DEFAULT_MENUS;
+    let records = JSON.parse(localStorage.getItem('bk_records')) || {};
 
     function saveMenus() {
-      localStorage.setItem('basket_menus', JSON.stringify(menus));
-      initMenuSelect();
+      localStorage.setItem('bk_menus', JSON.stringify(menus));
       renderMenuList();
+      renderCalendar();
     }
     function saveRecords() {
-      localStorage.setItem('basket_records', JSON.stringify(records));
+      localStorage.setItem('bk_records', JSON.stringify(records));
     }
 
-    function switchTab(tabName) {
-      ['timer', 'menu', 'calendar', 'settings'].forEach(t => {
+    function switchTab(tab) {
+      ['calendar', 'menu', 'timer', 'settings'].forEach(t => {
         document.getElementById(`sec-${t}`).classList.add('hidden');
         document.getElementById(`tab-${t}`).classList.remove('active-tab');
       });
-      document.getElementById(`sec-${tabName}`).classList.remove('hidden');
-      document.getElementById(`tab-${tabName}`).classList.add('active-tab');
+      document.getElementById(`sec-${tab}`).classList.remove('hidden');
+      document.getElementById(`tab-${tab}`).classList.add('active-tab');
     }
 
-    function initMenuSelect() {
-      const select = document.getElementById('timer-menu-select');
-      select.innerHTML = '';
-      menus.forEach(m => {
-        const opt = document.createElement('option');
-        opt.value = m.id;
-        opt.textContent = m.title;
-        select.appendChild(opt);
-      });
-      if (menus.length > 0) loadSelectedMenuToTimer();
-    }
-
-    function loadSelectedMenuToTimer() {
-      const selectedId = document.getElementById('timer-menu-select').value;
-      currentMenu = menus.find(m => m.id === selectedId) || menus[0];
-      resetTimer();
-    }
-
-    function updateTimerUI() {
-      if (!currentMenu || !currentMenu.steps[currentStepIndex]) return;
-      const step = currentMenu.steps[currentStepIndex];
-
-      document.getElementById('current-step-title').textContent = step.name;
-      document.getElementById('step-progress').textContent = `ステップ ${currentStepIndex + 1} / ${currentMenu.steps.length}`;
-
-      const typeLabel = document.getElementById('current-step-type');
-      if (step.type === 'rest') {
-        typeLabel.textContent = '休憩';
-        typeLabel.className = 'bg-blue-500/20 text-blue-400 px-3 py-1 rounded-full border border-blue-500/30';
-      } else {
-        typeLabel.textContent = '運動';
-        typeLabel.className = 'bg-orange-500/20 text-orange-400 px-3 py-1 rounded-full border border-orange-500/30';
-      }
-
-      const m = String(Math.floor(timerSeconds / 60)).padStart(2, '0');
-      const s = String(timerSeconds % 60).padStart(2, '0');
-      document.getElementById('timer-display').textContent = `${m}:${s}`;
-
-      const pct = (timerSeconds / step.duration) * 100;
-      document.getElementById('timer-progress-bar').style.width = `${pct}%`;
-
-      const nextStep = currentMenu.steps[currentStepIndex + 1];
-      document.getElementById('next-step-preview').textContent = nextStep ? `次: ${nextStep.name} (${nextStep.duration}秒)` : '次: これで完了！';
-    }
-
-    function toggleTimer() {
-      if (isRunning) pauseTimer();
-      else startTimer();
-    }
-
-    function startTimer() {
-      if (isRunning) return;
-      isRunning = true;
-      document.getElementById('btn-start').textContent = 'PAUSE';
-      document.getElementById('btn-start').className = 'col-span-2 bg-yellow-600 hover:bg-yellow-500 text-white font-extrabold py-4 rounded-xl shadow-lg text-lg';
-
-      playBeep(880, 0.2);
-
-      timerInterval = setInterval(() => {
-        timerSeconds--;
-        if (timerSeconds <= 3 && timerSeconds > 0) playBeep(440, 0.1);
-
-        if (timerSeconds < 0) {
-          nextStep();
-        } else {
-          updateTimerUI();
-        }
-      }, 1000);
-    }
-
-    function pauseTimer() {
-      isRunning = false;
-      clearInterval(timerInterval);
-      document.getElementById('btn-start').textContent = 'START';
-      document.getElementById('btn-start').className = 'col-span-2 bg-orange-600 hover:bg-orange-500 text-white font-extrabold py-4 rounded-xl shadow-lg text-lg';
-    }
-
-    function resetTimer() {
-      pauseTimer();
-      currentStepIndex = 0;
-      if (currentMenu && currentMenu.steps.length > 0) {
-        timerSeconds = currentMenu.steps[0].duration;
-      } else {
-        timerSeconds = 0;
-      }
-      document.getElementById('finish-action').classList.add('hidden');
-      updateTimerUI();
-    }
-
-    function nextStep() {
-      clearInterval(timerInterval);
-      currentStepIndex++;
-      if (currentMenu && currentStepIndex < currentMenu.steps.length) {
-        timerSeconds = currentMenu.steps[currentStepIndex].duration;
-        updateTimerUI();
-        if (isRunning) {
-          playBeep(880, 0.2);
-          timerInterval = setInterval(() => {
-            timerSeconds--;
-            if (timerSeconds <= 3 && timerSeconds > 0) playBeep(440, 0.1);
-            if (timerSeconds < 0) nextStep();
-            else updateTimerUI();
-          }, 1000);
-        }
-      } else {
-        pauseTimer();
-        playBeep(1200, 0.5);
-        document.getElementById('timer-display').textContent = 'COMPLETE';
-        document.getElementById('finish-action').classList.remove('hidden');
-      }
-    }
-
-    function renderMenuList() {
-      const container = document.getElementById('menu-list-container');
-      container.innerHTML = '';
-      menus.forEach((m, idx) => {
-        const card = document.createElement('div');
-        card.className = 'bg-slate-800 p-4 rounded-xl border border-slate-700 space-y-3';
-        card.innerHTML = `
-          <div class="flex justify-between items-center border-b border-slate-700 pb-2">
-            <input type="text" value="${m.title}" onchange="updateMenuTitle('${m.id}', this.value)" class="bg-slate-900 border border-slate-700 text-orange-400 font-bold text-md rounded px-2 py-1 focus:outline-none">
-            <button onclick="deleteMenu('${m.id}')" class="text-xs bg-red-900/50 text-red-300 px-2 py-1 rounded">削除</button>
-          </div>
-          <div class="space-y-2">
-            ${m.steps.map((s, sIdx) => `
-              <div class="flex items-center gap-2 text-xs">
-                <input type="text" value="${s.name}" onchange="updateStep('${m.id}',${sIdx}, 'name', this.value)" class="bg-slate-900 border border-slate-700 text-white rounded p-1 flex-1">
-                <input type="number" value="${s.duration}" onchange="updateStep('${m.id}',${sIdx}, 'duration', parseInt(this.value))" class="bg-slate-900 border border-slate-700 text-white rounded p-1 w-14 text-center">秒
-                <select onchange="updateStep('${m.id}',${sIdx}, 'type', this.value)" class="bg-slate-900 border border-slate-700 text-slate-300 rounded p-1">
-                  <option value="work" ${s.type === 'work' ? 'selected' : ''}>運動</option>
-                  <option value="rest" ${s.type === 'rest' ? 'selected' : ''}>休憩</option>
-                </select>
-                <button onclick="deleteStep('${m.id}',${sIdx})" class="text-red-400">✕</button>
-              </div>
-            `).join('')}
-          </div>
-          <button onclick="addStep('${m.id}')" class="w-full bg-slate-700/50 hover:bg-slate-700 text-slate-300 text-xs py-1.5 rounded border border-dashed border-slate-600">＋ ステップ追加</button>
-        `;
-        container.appendChild(card);
-      });
-    }
-
-    function updateMenuTitle(id, val) {
-      const m = menus.find(x => x.id === id);
-      if (m) { m.title = val; saveMenus(); }
-    }
-    function deleteMenu(id) {
-      menus = menus.filter(x => x.id !== id);
-      saveMenus();
-    }
-    function addNewMenuPrompt() {
-      const title = prompt('新しいメニュー名を入力してください:', 'シュート練習①');
-      if (title) {
-        menus.push({ id: 'menu_' + Date.now(), title: title, steps: [{ name: '練習1', duration: 30, type: 'work' }] });
-        saveMenus();
-      }
-    }
-    function updateStep(mId, sIdx, key, val) {
-      const m = menus.find(x => x.id === mId);
-      if (m && m.steps[sIdx]) { m.steps[sIdx][key] = val; saveMenus(); }
-    }
-    function deleteStep(mId, sIdx) {
-      const m = menus.find(x => x.id === mId);
-      if (m) { m.steps.splice(sIdx, 1); saveMenus(); }
-    }
-    function addStep(mId) {
-      const m = menus.find(x => x.id === mId);
-      if (m) { m.steps.push({ name: '新規ステップ', duration: 30, type: 'work' }); saveMenus(); }
-    }
-
+    // カレンダー機能
     const datePicker = document.getElementById('calendar-date-picker');
     datePicker.value = new Date().toISOString().split('T')[0];
 
-    function renderCalendarRecords() {
+    function renderCalendar() {
       const date = datePicker.value;
       document.getElementById('selected-date-label').textContent = `${date} の練習記録`;
       const container = document.getElementById('calendar-checklist');
@@ -372,14 +142,17 @@
       const dayRecord = records[date] || [];
 
       menus.forEach(m => {
-        const isChecked = dayRecord.includes(m.id);
-        const item = document.createElement('label');
-        item.className = 'flex items-center gap-3 bg-slate-900 p-3 rounded-lg border border-slate-700 cursor-pointer';
-        item.innerHTML = `
-          <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleRecord('${date}', '${m.id}')" class="w-5 h-5 accent-orange-500 rounded">
-          <span class="text-sm font-medium ${isChecked ? 'text-orange-400 font-bold' : 'text-slate-300'}">${m.title}</span>
+        const checked = dayRecord.includes(m.id);
+        const div = document.createElement('label');
+        div.className = 'flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200 cursor-pointer';
+        div.innerHTML = `
+          <div>
+            <div class="font-bold text-sm text-gray-800">${m.title}</div>
+            <div class="text-xs text-gray-500">${m.detail}</div>
+          </div>
+          <input type="checkbox" ${checked ? 'checked' : ''} onchange="toggleRecord('${date}', '${m.id}')" class="w-5 h-5 accent-blue-600 rounded">
         `;
-        container.appendChild(item);
+        container.appendChild(div);
       });
     }
 
@@ -391,49 +164,107 @@
         records[date].push(menuId);
       }
       saveRecords();
-      renderCalendarRecords();
     }
 
-    function markCurrentMenuAsDone() {
-      if (!currentMenu) return;
-      const today = new Date().toISOString().split('T')[0];
-      if (!records[today]) records[today] = [];
-      if (!records[today].includes(currentMenu.id)) {
-        records[today].push(currentMenu.id);
-        saveRecords();
+    // メニュー編集機能
+    function renderMenuList() {
+      const container = document.getElementById('menu-list');
+      container.innerHTML = '';
+      menus.forEach((m, idx) => {
+        const div = document.createElement('div');
+        div.className = 'bg-white p-3 rounded-lg border border-gray-200 shadow-sm space-y-2';
+        div.innerHTML = `
+          <input type="text" value="${m.title}" onchange="updateMenu(${idx}, 'title', this.value)" class="font-bold w-full border-b pb-1 text-sm focus:outline-none border-gray-300">
+          <input type="text" value="${m.detail}" onchange="updateMenu(${idx}, 'detail', this.value)" class="text-xs text-gray-600 w-full border-b pb-1 focus:outline-none border-gray-300">
+          <div class="text-right">
+            <button onclick="deleteMenu(${idx})" class="text-xs text-red-500 hover:underline">削除</button>
+          </div>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function updateMenu(idx, key, val) {
+      menus[idx][key] = val;
+      saveMenus();
+    }
+
+    function deleteMenu(idx) {
+      menus.splice(idx, 1);
+      saveMenus();
+    }
+
+    function addNewMenu() {
+      menus.push({ id: 'm_' + Date.now(), title: '新しいメニュー', detail: '内容を入力してください' });
+      saveMenus();
+    }
+
+    // タイマー機能
+    let timerVal = 30;
+    let timerInt = null;
+    let isWork = true;
+    let isRunning = false;
+
+    function updateTimerUI() {
+      const s = String(timerVal).padStart(2, '0');
+      document.getElementById('timer-display').textContent = `00:${s}`;
+      document.getElementById('timer-status').textContent = isWork ? '運動時間！💪' : '休憩時間 ☕';
+    }
+
+    function toggleTimer() {
+      if (isRunning) {
+        clearInterval(timerInt);
+        isRunning = false;
+        document.getElementById('btn-timer-start').textContent = 'スタート';
+      } else {
+        isRunning = true;
+        document.getElementById('btn-timer-start').textContent = '一時停止';
+        timerInt = setInterval(() => {
+          timerVal--;
+          if (timerVal < 0) {
+            isWork = !isWork;
+            const w = parseInt(document.getElementById('cfg-work').value) || 30;
+            const r = parseInt(document.getElementById('cfg-rest').value) || 5;
+            timerVal = isWork ? w : r;
+          }
+          updateTimerUI();
+        }, 1000);
       }
-      alert(`「${currentMenu.title}」を本日の記録に追加しました！`);
-      switchTab('calendar');
-      datePicker.value = today;
-      renderCalendarRecords();
     }
 
+    function resetTimer() {
+      clearInterval(timerInt);
+      isRunning = false;
+      isWork = true;
+      timerVal = parseInt(document.getElementById('cfg-work').value) || 30;
+      document.getElementById('btn-timer-start').textContent = 'スタート';
+      updateTimerUI();
+    }
+
+    // エクスポート / インポート
     function exportData() {
       const data = { menus, records };
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = url;
-      a.download = `basket_app_backup_${new Date().toISOString().split('T')[0]}.json`;
+      a.href = URL.createObjectURL(blob);
+      a.download = `basket_data_${new Date().toISOString().split('T')[0]}.json`;
       a.click();
-      URL.revokeObjectURL(url);
     }
 
-    function importData(event) {
-      const file = event.target.files[0];
+    function importData(e) {
+      const file = e.target.files[0];
       if (!file) return;
       const reader = new FileReader();
-      reader.onload = function(e) {
+      reader.onload = function(evt) {
         try {
-          const data = JSON.parse(e.target.result);
+          const data = JSON.parse(evt.target.result);
           if (data.menus) menus = data.menus;
           if (data.records) records = data.records;
           saveMenus();
           saveRecords();
-          renderCalendarRecords();
-          alert('バックアップデータを正常に復元しました！');
+          alert('データの読み込みが完了しました！');
         } catch (err) {
-          alert('ファイルの読み込みに失敗しました。正しいJSONファイルか確認してください。');
+          alert('ファイルの形式が正しくありません。');
         }
       };
       reader.readAsText(file);
@@ -443,9 +274,8 @@
       navigator.serviceWorker.register('./sw.js').catch(() => {});
     }
 
-    initMenuSelect();
     renderMenuList();
-    renderCalendarRecords();
+    renderCalendar();
   </script>
 </body>
 </html>
