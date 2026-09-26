@@ -9,9 +9,6 @@
     <!-- Google Fonts & FontAwesome Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- QRCode Generator & Reader Libraries -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <script src="https://unpkg.com/html5-qrcode"></script>
     
     <script>
         tailwind.config = {
@@ -70,8 +67,22 @@
                     <p class="text-xs text-gray-400">ステップ連動タイマー & 練習記録</p>
                 </div>
             </div>
-            <div id="todayBadge" class="bg-bbDarkLight text-xs px-3 py-1.5 rounded-full border border-gray-700 font-bold text-bbOrange">
-                --/--/--
+            
+            <!-- Export / Import Control & Date Badge -->
+            <div class="flex items-center gap-2">
+                <button onclick="exportData()" class="bg-bbDarkLight hover:bg-gray-700 text-gray-300 text-xs px-2.5 py-1.5 rounded-xl border border-gray-700 font-bold transition flex items-center gap-1" title="データ書き出し (PC→スマホ移動用)">
+                    <i class="fa-solid fa-download text-bbOrange"></i>
+                    <span class="hidden sm:inline">書き出し</span>
+                </button>
+                <button onclick="triggerImport()" class="bg-bbDarkLight hover:bg-gray-700 text-gray-300 text-xs px-2.5 py-1.5 rounded-xl border border-gray-700 font-bold transition flex items-center gap-1" title="データ読み込み">
+                    <i class="fa-solid fa-upload text-bbAccent"></i>
+                    <span class="hidden sm:inline">読み込み</span>
+                </button>
+                <input type="file" id="importFileInput" accept=".json" class="hidden" onchange="importData(event)">
+
+                <div id="todayBadge" class="bg-bbDarkLight text-xs px-3 py-1.5 rounded-full border border-gray-700 font-bold text-bbOrange">
+                    --/--/--
+                </div>
             </div>
         </div>
     </header>
@@ -86,7 +97,7 @@
                 <span>タイマー</span>
             </button>
             <button onclick="switchTab('custom')" id="tab-custom" class="tab-btn flex-1 py-3 rounded-xl font-extrabold text-sm flex items-center justify-center gap-2 transition-all text-gray-400 hover:text-white">
-                <i class="fa-solid fa-list-check text-base"></i>
+                <i class="fa-solid fa-[#10B981] fa-list-check text-base"></i>
                 <span>メニュー設定</span>
             </button>
             <button onclick="switchTab('calendar')" id="tab-calendar" class="tab-btn flex-1 py-3 rounded-xl font-extrabold text-sm flex items-center justify-center gap-2 transition-all text-gray-400 hover:text-white">
@@ -101,7 +112,7 @@
                 
                 <!-- Menu Selection Header -->
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-bbDarkLight p-4 rounded-2xl border border-gray-800">
-                    <div class="flex-grow">
+                    <div>
                         <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">実行する練習メニューを選択</label>
                         <select id="timerMenuSelect" onchange="loadSelectedMenuToTimer()" class="w-full bg-bbDarkCard text-white font-bold text-base rounded-xl p-3 border border-gray-700 focus:outline-none focus:border-bbOrange transition">
                             <!-- JS for dynamically loading options -->
@@ -167,7 +178,7 @@
                 </div>
 
                 <!-- Completion Action Banner (Hidden by default) -->
-                <div id="completionBanner" class="hidden bg-emerald-500/10 border-2 border-emerald-500 p-5 rounded-2xl text-center space-y-3">
+                <div id="completionBanner" class="hidden bg-emerald-500/10 border-2 border-emerald-500 p-5 rounded-2xl text-center space-y-3 animate-bounce-short">
                     <div class="text-emerald-400 font-black text-lg flex items-center justify-center gap-2">
                         <i class="fa-solid fa-circle-check text-xl"></i>
                         <span>トレーニング完了！お疲れ様でした！</span>
@@ -182,12 +193,10 @@
             </div>
         </section>
 
-        <!-- 2. CUSTOM MENU TAB (Steps Builder + Transfer Actions) -->
+        <!-- 2. CUSTOM MENU TAB (Steps Builder) -->
         <section id="sec-custom" class="tab-content hidden space-y-6">
             <div class="bg-bbDark p-5 sm:p-7 rounded-3xl border border-gray-800 shadow-2xl space-y-6">
-                
-                <!-- Section Header & Top Actions -->
-                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-gray-800">
+                <div class="flex justify-between items-center pb-4 border-b border-gray-800">
                     <div>
                         <h2 class="text-lg font-extrabold text-white flex items-center gap-2">
                             <i class="fa-solid fa-sliders text-bbOrange"></i>
@@ -195,28 +204,10 @@
                         </h2>
                         <p class="text-xs text-gray-400">各メニューごとに運動と休憩の細かなステップを自由にカスタム作成できます</p>
                     </div>
-                    
-                    <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-                        <!-- Data Export / Import Buttons -->
-                        <button onclick="exportDataJSON()" class="bg-bbDarkLight hover:bg-gray-700 text-gray-200 text-xs font-bold px-3 py-2.5 rounded-xl border border-gray-700 transition flex items-center gap-1.5">
-                            <i class="fa-solid fa-download text-bbOrange"></i>
-                            <span>JSON出力</span>
-                        </button>
-                        <label class="bg-bbDarkLight hover:bg-gray-700 text-gray-200 text-xs font-bold px-3 py-2.5 rounded-xl border border-gray-700 transition flex items-center gap-1.5 cursor-pointer">
-                            <i class="fa-solid fa-upload text-bbAccent"></i>
-                            <span>JSON取込</span>
-                            <input type="file" accept=".json" onchange="importDataJSON(event)" class="hidden">
-                        </label>
-                        <button onclick="openQRScanModal()" class="bg-bbDarkLight hover:bg-gray-700 text-gray-200 text-xs font-bold px-3 py-2.5 rounded-xl border border-gray-700 transition flex items-center gap-1.5">
-                            <i class="fa-solid fa-qrcode text-emerald-400"></i>
-                            <span>QR読取</span>
-                        </button>
-
-                        <button onclick="openMenuModal()" class="bg-bbOrange hover:bg-bbOrangeDark text-white text-xs font-extrabold px-4 py-2.5 rounded-xl transition flex items-center gap-1.5 shadow-lg shadow-bbOrange/20 ml-auto sm:ml-0">
-                            <i class="fa-solid fa-plus"></i>
-                            <span>新規メニュー</span>
-                        </button>
-                    </div>
+                    <button onclick="openMenuModal()" class="bg-bbOrange hover:bg-bbOrangeDark text-white text-xs font-extrabold px-4 py-2.5 rounded-xl transition flex items-center gap-1.5 shadow-lg shadow-bbOrange/20 shrink-0">
+                        <i class="fa-solid fa-plus"></i>
+                        <span>新規メニュー作成</span>
+                    </button>
                 </div>
 
                 <!-- Menu Cards List -->
@@ -234,7 +225,7 @@
                     <div class="flex justify-between items-center mb-2">
                         <h2 id="calendarMonthYear" class="text-lg font-bold text-white flex items-center gap-2">
                             <i class="fa-solid fa-calendar-days text-bbOrange"></i>
-                            ----年 --月
+                            2026年 9月
                         </h2>
                         <div class="flex gap-2">
                             <button onclick="changeMonth(-1)" class="p-2 rounded-xl bg-bbDarkLight hover:bg-gray-700 text-gray-300 transition border border-gray-700">
@@ -328,38 +319,6 @@
         </div>
     </div>
 
-    <!-- QR Code Display Modal -->
-    <div id="qrShowModal" class="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 hidden backdrop-blur-sm">
-        <div class="bg-bbDark w-full max-w-sm rounded-3xl p-6 border border-gray-800 shadow-2xl text-center space-y-4">
-            <h3 id="qrModalTitle" class="text-base font-extrabold text-white">メニュー送信QRコード</h3>
-            <p class="text-xs text-gray-400">スマホでこのQRコードを読み取ると、メニューデータを取り込めます。</p>
-            
-            <div class="bg-white p-4 rounded-2xl inline-block shadow-inner mx-auto">
-                <div id="qrcodeCanvas"></div>
-            </div>
-
-            <button onclick="closeQRShowModal()" class="w-full py-3 bg-gray-800 hover:bg-gray-700 text-gray-200 font-bold text-sm rounded-xl transition">
-                閉じる
-            </button>
-        </div>
-    </div>
-
-    <!-- QR Scanner Modal -->
-    <div id="qrScanModal" class="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 hidden backdrop-blur-sm">
-        <div class="bg-bbDark w-full max-w-md rounded-3xl p-6 border border-gray-800 shadow-2xl text-center space-y-4">
-            <div class="flex justify-between items-center pb-2 border-b border-gray-800">
-                <h3 class="text-base font-extrabold text-white">QRコードでメニュー読込</h3>
-                <button onclick="closeQRScanModal()" class="text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
-            </div>
-            
-            <div id="qr-reader" class="overflow-hidden rounded-2xl border border-gray-700 bg-black min-h-[250px]"></div>
-
-            <button onclick="closeQRScanModal()" class="w-full py-3 bg-gray-800 hover:bg-gray-700 text-gray-200 font-bold text-sm rounded-xl transition">
-                キャンセル
-            </button>
-        </div>
-    </div>
-
     <!-- Toast Notification -->
     <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-gray-900 border border-bbOrange text-white text-xs px-5 py-3 rounded-full shadow-2xl transition-all duration-300 opacity-0 pointer-events-none z-50 flex items-center gap-2.5">
         <i class="fa-solid fa-circle-check text-bbOrange text-sm"></i>
@@ -406,7 +365,6 @@
         let activeMenu = null;
         let currentStepIndex = 0;
         let remainingSeconds = 0;
-        let html5QrCode = null;
 
         // --- Initialization ---
         window.onload = function() {
@@ -448,6 +406,75 @@
             const m = String(date.getMonth() + 1).padStart(2, '0');
             const d = String(date.getDate()).padStart(2, '0');
             return `${y}-${m}-${d}`;
+        }
+
+        // --- DATA EXPORT & IMPORT (PC ⇄ スマホ連携) ---
+        function exportData() {
+            const exportPayload = {
+                version: '1.0',
+                exportedAt: new Date().toISOString(),
+                menus: menuList,
+                logs: dailyLogs
+            };
+
+            const jsonStr = JSON.stringify(exportPayload, null, 2);
+            const blob = new Blob([jsonStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+
+            const now = new Date();
+            const dateSuffix = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
+            const fileName = `hoop_timer_data_${dateSuffix}.json`;
+
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            showToast('データファイルを書き出しました');
+        }
+
+        function triggerImport() {
+            document.getElementById('importFileInput').click();
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+
+                    if (!data.menus || !Array.isArray(data.menus)) {
+                        throw new Error('無効なデータ構造です');
+                    }
+
+                    if (confirm('既存のデータが上書きされます。インポートを実行しますか？')) {
+                        menuList = data.menus;
+                        dailyLogs = data.logs || {};
+
+                        localStorage.setItem('hoop_step_menus', JSON.stringify(menuList));
+                        localStorage.setItem('hoop_step_logs', JSON.stringify(dailyLogs));
+
+                        renderMenuList();
+                        populateTimerMenuSelect();
+                        renderCalendar();
+                        selectDate(selectedDateStr);
+
+                        showToast('データを正常に読み込みました！');
+                    }
+                } catch (err) {
+                    alert('ファイルの読み込みに失敗しました。正しいJSONファイルか確認してください。');
+                    console.error(err);
+                }
+                // リセットして同じファイルを連続選択可能にする
+                event.target.value = '';
+            };
+            reader.readAsText(file);
         }
 
         // --- Web Audio API (Sound Synthesizer) ---
@@ -535,6 +562,7 @@
             currentStepIndex = 0;
             remainingSeconds = activeMenu.steps[0].time;
 
+            // Compute total menu duration
             const totalSec = activeMenu.steps.reduce((acc, curr) => acc + parseInt(curr.time || 0), 0);
             const tm = String(Math.floor(totalSec / 60)).padStart(2, '0');
             const ts = String(totalSec % 60).padStart(2, '0');
@@ -569,18 +597,22 @@
             document.getElementById('textStartPause').textContent = '一時停止';
             document.getElementById('iconStartPause').className = 'fa-solid fa-pause';
 
+            // Initial start sound
             playBeep(600, 0.15);
 
             timerInterval = setInterval(() => {
                 remainingSeconds--;
 
                 if (remainingSeconds < 0) {
+                    // Step transition
                     currentStepIndex++;
                     if (currentStepIndex < activeMenu.steps.length) {
                         remainingSeconds = activeMenu.steps[currentStepIndex].time;
                         const nextType = activeMenu.steps[currentStepIndex].type;
+                        // Higher pitch for WORK, lower for REST
                         playBeep(nextType === 'WORK' ? 1000 : 500, 0.35);
                     } else {
+                        // All Steps Completed
                         clearInterval(timerInterval);
                         timerInterval = null;
                         isRunning = false;
@@ -632,6 +664,7 @@
             const nextInfo = document.getElementById('timerNextInfo');
 
             if (currentStepIndex >= totalSteps) {
+                // Completed state
                 phaseBadge.textContent = 'FINISH';
                 phaseBadge.className = 'px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
                 stepTitle.textContent = '🎉 全ステップ完了！';
@@ -648,10 +681,12 @@
             const step = activeMenu.steps[currentStepIndex];
             stepTitle.textContent = step.name || (step.type === 'WORK' ? '運動' : '休憩');
 
+            // Formatted clock
             const m = String(Math.floor(remainingSeconds / 60)).padStart(2, '0');
             const s = String(remainingSeconds % 60).padStart(2, '0');
             clock.textContent = `${m}:${s}`;
 
+            // Phase styling
             if (step.type === 'WORK') {
                 phaseBadge.textContent = '🔥 WORK';
                 phaseBadge.className = 'px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest bg-bbOrange/20 text-bbOrange border border-bbOrange/30';
@@ -662,6 +697,7 @@
                 displayBox.className = 'py-10 px-4 rounded-3xl bg-bbRest/10 border-4 border-bbRest text-center transition-all duration-300 relative overflow-hidden shadow-inner';
             }
 
+            // Next step preview
             if (currentStepIndex + 1 < totalSteps) {
                 const nextStep = activeMenu.steps[currentStepIndex + 1];
                 nextInfo.textContent = `次: ${nextStep.name} (${nextStep.time}秒)`;
@@ -669,6 +705,7 @@
                 nextInfo.textContent = '次: 完了！';
             }
 
+            // Progress bar calculation
             const progressRatio = (currentStepIndex / totalSteps) * 100;
             document.getElementById('progressBar').style.width = `${progressRatio}%`;
             document.getElementById('progressStepText').textContent = `ステップ ${currentStepIndex + 1} / ${totalSteps}`;
@@ -679,92 +716,96 @@
             if (!activeMenu) return;
 
             const todayStr = formatDate(new Date());
-            const log = dailyLogs[todayStr] || { completedMenuIds: [], note: '' };
+            const log = dailyLogs[todayStr] || { completedMenus: [], note: '' };
 
-            if (!log.completedMenuIds.includes(activeMenu.id)) {
-                log.completedMenuIds.push(activeMenu.id);
+            if (!log.completedMenus.includes(activeMenu.id)) {
+                log.completedMenus.push(activeMenu.id);
             }
 
             dailyLogs[todayStr] = log;
             localStorage.setItem('hoop_step_logs', JSON.stringify(dailyLogs));
 
-            showToast('本日の練習記録に追加しました');
+            showToast(`「${activeMenu.title}」を本日の完了記録に保存しました！`);
             document.getElementById('completionBanner').classList.add('hidden');
-            renderCalendar();
+            
             selectDate(selectedDateStr);
+            renderCalendar();
         }
 
-        // --- MENU CUSTOM BUILDER ---
+        // --- CUSTOM MENU BUILDER ---
         function renderMenuList() {
             const container = document.getElementById('menuList');
             container.innerHTML = '';
 
             if (menuList.length === 0) {
-                container.innerHTML = '<div class="text-center py-8 text-gray-500 text-sm">登録済みのメニューがありません。「新規メニュー作成」から追加してください。</div>';
+                container.innerHTML = '<p class="text-xs text-gray-500 py-8 text-center">メニューがありません。「新規メニュー作成」から追加してください。</p>';
                 return;
             }
 
-            menuList.forEach(menu => {
-                const totalSec = menu.steps.reduce((acc, curr) => acc + parseInt(curr.time || 0), 0);
-                const m = Math.floor(totalSec / 60);
-                const s = totalSec % 60;
+            menuList.forEach(m => {
+                const totalSec = m.steps ? m.steps.reduce((acc, c) => acc + parseInt(c.time || 0), 0) : 0;
+                const tm = Math.floor(totalSec / 60);
+                const ts = totalSec % 60;
 
                 const card = document.createElement('div');
-                card.className = 'bg-bbDarkLight p-4 rounded-2xl border border-gray-800 space-y-3';
+                card.className = 'bg-bbDarkLight p-5 rounded-2xl border border-gray-800 space-y-3';
+                
+                let stepsHtml = '';
+                if (m.steps && m.steps.length > 0) {
+                    stepsHtml = m.steps.map((st, i) => `
+                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold ${st.type === 'WORK' ? 'bg-bbOrange/10 text-bbOrange border border-bbOrange/20' : 'bg-bbRest/10 text-bbRest border border-bbRest/20'}">
+                            ${st.name} (${st.time}s)
+                        </span>
+                    `).join('');
+                }
+
                 card.innerHTML = `
-                    <div class="flex justify-between items-center">
-                        <h3 class="font-bold text-white text-base flex items-center gap-2">
-                            ${menu.title}
-                            <span class="text-xs font-mono font-normal bg-bbDark px-2.5 py-0.5 rounded-md text-bbOrange border border-gray-700">
-                                約${m}分${s}秒
-                            </span>
-                        </h3>
-                        <div class="flex items-center gap-2">
-                            <button onclick="showMenuQR('${menu.id}')" class="p-2 text-emerald-400 hover:bg-gray-800 rounded-lg transition" title="QRコードで送信">
-                                <i class="fa-solid fa-qrcode"></i>
+                    <div class="flex justify-between items-start gap-2">
+                        <div>
+                            <h4 class="font-extrabold text-white text-base">${escapeHtml(m.title)}</h4>
+                            <p class="text-xs text-gray-400 mt-0.5">全 ${m.steps ? m.steps.length : 0} ステップ • 約 ${tm > 0 ? tm + '分' : ''}${ts}秒</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="openMenuModal('${m.id}')" class="p-2 text-gray-300 hover:text-white bg-bbDark rounded-xl border border-gray-700 transition">
+                                <i class="fa-solid fa-pen-to-square text-xs"></i>
                             </button>
-                            <button onclick="openMenuModal('${menu.id}')" class="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition">
-                                <i class="fa-solid fa-pen-to-square"></i>
-                            </button>
-                            <button onclick="deleteMenu('${menu.id}')" class="p-2 text-red-400 hover:bg-red-500/10 rounded-lg transition">
-                                <i class="fa-solid fa-trash-can"></i>
+                            <button onclick="deleteMenu('${m.id}')" class="p-2 text-red-400 hover:text-red-300 bg-bbDark rounded-xl border border-gray-700 transition">
+                                <i class="fa-solid fa-trash-can text-xs"></i>
                             </button>
                         </div>
                     </div>
                     <div class="flex flex-wrap gap-1.5 pt-1">
-                        ${menu.steps.map(s => `
-                            <span class="text-[11px] px-2.5 py-1 rounded-lg border font-medium ${s.type === 'WORK' ? 'bg-bbOrange/10 border-bbOrange/30 text-bbOrange' : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'}">
-                                ${s.name} (${s.time}s)
-                            </span>
-                        `).join('')}
+                        ${stepsHtml}
                     </div>
                 `;
                 container.appendChild(card);
             });
         }
 
-        function openMenuModal(menuId = null) {
-            const modal = document.getElementById('menuModal');
-            const container = document.getElementById('stepsContainer');
-            container.innerHTML = '';
+        function openMenuModal(editId = null) {
+            document.getElementById('editMenuId').value = editId || '';
+            const stepsContainer = document.getElementById('stepsContainer');
+            stepsContainer.innerHTML = '';
 
-            if (menuId) {
-                const m = menuList.find(x => x.id === menuId);
+            if (editId) {
+                const m = menuList.find(x => x.id === editId);
                 document.getElementById('modalTitle').textContent = 'メニュー編集';
-                document.getElementById('editMenuId').value = m.id;
                 document.getElementById('menuTitleInput').value = m.title;
-                m.steps.forEach(step => addStepRow(step.name, step.type, step.time));
+
+                if (m.steps && m.steps.length > 0) {
+                    m.steps.forEach(st => addStepRow(st.name, st.type, st.time));
+                } else {
+                    addStepRow();
+                }
             } else {
                 document.getElementById('modalTitle').textContent = '新規メニュー作成';
-                document.getElementById('editMenuId').value = '';
                 document.getElementById('menuTitleInput').value = '';
-                // Default step templates
-                addStepRow('右手パウンド', 'WORK', 30);
+                // Default 3 sample step rows
+                addStepRow('右手パウンドドリブル', 'WORK', 30);
                 addStepRow('休憩', 'REST', 10);
-                addStepRow('左手パウンド', 'WORK', 30);
+                addStepRow('左手パウンドドリブル', 'WORK', 30);
             }
-
-            modal.classList.remove('hidden');
+            document.getElementById('menuModal').classList.remove('hidden');
         }
 
         function closeMenuModal() {
@@ -774,50 +815,52 @@
         function addStepRow(name = '', type = 'WORK', time = 30) {
             const container = document.getElementById('stepsContainer');
             const row = document.createElement('div');
-            row.className = 'step-row flex items-center gap-2 bg-bbDarkCard p-2 rounded-xl border border-gray-700';
+            row.className = 'step-row flex items-center gap-2 bg-bbDarkCard p-2.5 rounded-xl border border-gray-700/80';
             row.innerHTML = `
-                <select class="step-type bg-bbDark text-xs font-bold text-white p-2 rounded-lg border border-gray-700 focus:outline-none">
-                    <option value="WORK" ${type === 'WORK' ? 'selected' : ''}>運動</option>
-                    <option value="REST" ${type === 'REST' ? 'selected' : ''}>休憩</option>
+                <select class="step-type bg-bbDark text-white text-xs font-bold rounded-lg p-2 border border-gray-700 focus:outline-none">
+                    <option value="WORK" ${type === 'WORK' ? 'selected' : ''}>🔥 運動</option>
+                    <option value="REST" ${type === 'REST' ? 'selected' : ''}>☕ 休憩</option>
                 </select>
-                <input type="text" value="${name}" placeholder="ステップ名" class="step-name flex-grow bg-bbDark text-white text-xs font-semibold p-2 rounded-lg border border-gray-700 focus:outline-none">
-                <div class="flex items-center gap-1 shrink-0">
-                    <input type="number" value="${time}" min="1" class="step-time w-16 bg-bbDark text-white text-xs font-mono font-bold p-2 rounded-lg border border-gray-700 text-center focus:outline-none">
-                    <span class="text-xs text-gray-400">秒</span>
+                <input type="text" value="${escapeHtml(name)}" placeholder="ステップ名 (例: 右手ドリル)" class="step-name flex-1 bg-bbDark text-white text-xs font-semibold rounded-lg p-2 border border-gray-700 focus:outline-none">
+                <div class="flex items-center gap-1">
+                    <input type="number" value="${time}" min="1" max="600" class="step-time w-16 bg-bbDark text-center text-white text-xs font-bold rounded-lg p-2 border border-gray-700 focus:outline-none">
+                    <span class="text-xs text-gray-400 font-semibold">秒</span>
                 </div>
-                <button type="button" onclick="this.closest('.step-row').remove()" class="p-1.5 text-gray-500 hover:text-red-400 transition">
-                    <i class="fa-solid fa-xmark"></i>
+                <button type="button" onclick="this.parentElement.remove()" class="p-1.5 text-gray-400 hover:text-red-400">
+                    <i class="fa-solid fa-xmark text-sm"></i>
                 </button>
             `;
             container.appendChild(row);
         }
 
         function saveMenu() {
+            const id = document.getElementById('editMenuId').value;
             const title = document.getElementById('menuTitleInput').value.trim();
+
             if (!title) {
-                showToast('メニュータイトルを入力してください');
+                alert('メニュータイトルを入力してください');
                 return;
             }
 
-            const stepRows = document.querySelectorAll('#stepsContainer .step-row');
+            const stepRows = document.querySelectorAll('.step-row');
             const steps = [];
+
             stepRows.forEach(row => {
+                const name = row.querySelector('.step-name').value.trim() || 'ステップ';
                 const type = row.querySelector('.step-type').value;
-                const name = row.querySelector('.step-name').value.trim() || (type === 'WORK' ? '運動' : '休憩');
                 const time = parseInt(row.querySelector('.step-time').value) || 10;
                 steps.push({ name, type, time });
             });
 
             if (steps.length === 0) {
-                showToast('ステップを1つ以上追加してください');
+                alert('少なくとも1つのステップを追加してください');
                 return;
             }
 
-            const editId = document.getElementById('editMenuId').value;
-            if (editId) {
-                const index = menuList.findIndex(m => m.id === editId);
-                if (index !== -1) {
-                    menuList[index] = { id: editId, title, steps };
+            if (id) {
+                const idx = menuList.findIndex(x => x.id === id);
+                if (idx !== -1) {
+                    menuList[idx] = { id, title, steps };
                 }
             } else {
                 menuList.push({
@@ -827,133 +870,30 @@
                 });
             }
 
-            saveMenuListToStorage();
-            closeMenuModal();
-            showToast('メニューを保存しました');
-        }
-
-        function deleteMenu(menuId) {
-            if (!confirm('この練習メニューを削除してもよろしいですか？')) return;
-            menuList = menuList.filter(m => m.id !== menuId);
-            saveMenuListToStorage();
-            showToast('メニューを削除しました');
-        }
-
-        function saveMenuListToStorage() {
             localStorage.setItem('hoop_step_menus', JSON.stringify(menuList));
             renderMenuList();
             populateTimerMenuSelect();
             selectDate(selectedDateStr);
+            closeMenuModal();
+            showToast(id ? 'メニューを改定しました' : '新メニューを作成しました');
         }
 
-        // --- DATA EXPORT / IMPORT (FILE & QR) ---
-        function exportDataJSON() {
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(menuList, null, 2));
-            const dlAnchorElem = document.createElement('a');
-            dlAnchorElem.setAttribute("href", dataStr);
-            dlAnchorElem.setAttribute("download", `hoop_timer_menus_${formatDate(new Date())}.json`);
-            document.body.appendChild(dlAnchorElem);
-            dlAnchorElem.click();
-            dlAnchorElem.remove();
-            showToast('JSONファイルを出力しました');
-        }
-
-        function importDataJSON(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const imported = JSON.parse(e.target.result);
-                    if (Array.isArray(imported)) {
-                        menuList = imported;
-                        saveMenuListToStorage();
-                        showToast('メニューを取り込みました！');
-                    } else {
-                        showToast('無効なデータ形式です');
-                    }
-                } catch (err) {
-                    showToast('JSONファイルの読み込みに失敗しました');
-                }
-            };
-            reader.readAsText(file);
-        }
-
-        function showMenuQR(menuId) {
-            const menu = menuList.find(m => m.id === menuId);
-            if (!menu) return;
-
-            const qrContainer = document.getElementById('qrcodeCanvas');
-            qrContainer.innerHTML = '';
-
-            document.getElementById('qrModalTitle').textContent = `「${menu.title}」を送信`;
-
-            // Compact JSON payload for QR code
-            const payload = JSON.stringify([menu]);
-
-            new QRCode(qrContainer, {
-                text: payload,
-                width: 200,
-                height: 200,
-                correctLevel: QRCode.CorrectLevel.L
-            });
-
-            document.getElementById('qrShowModal').classList.remove('hidden');
-        }
-
-        function closeQRShowModal() {
-            document.getElementById('qrShowModal').classList.add('hidden');
-        }
-
-        function openQRScanModal() {
-            document.getElementById('qrScanModal').classList.remove('hidden');
-            html5QrCode = new Html5Qrcode("qr-reader");
-            
-            html5QrCode.start(
-                { facingMode: "environment" },
-                { fps: 10, qrbox: { width: 220, height: 220 } },
-                (decodedText) => {
-                    try {
-                        const imported = JSON.parse(decodedText);
-                        if (Array.isArray(imported)) {
-                            imported.forEach(newMenu => {
-                                const idx = menuList.findIndex(m => m.id === newMenu.id);
-                                if (idx !== -1) {
-                                    menuList[idx] = newMenu;
-                                } else {
-                                    menuList.push(newMenu);
-                                }
-                            });
-                            saveMenuListToStorage();
-                            showToast('QRからメニューを受信しました！');
-                            closeQRScanModal();
-                        }
-                    } catch (e) {
-                        showToast('読み取ったQRデータが正しくありません');
-                    }
-                },
-                (errorMessage) => { /* scanning */ }
-            ).catch(err => {
-                showToast('カメラの起動に失敗しました');
-            });
-        }
-
-        function closeQRScanModal() {
-            if (html5QrCode) {
-                html5QrCode.stop().then(() => {
-                    html5QrCode.clear();
-                    document.getElementById('qrScanModal').classList.add('hidden');
-                }).catch(() => {
-                    document.getElementById('qrScanModal').classList.add('hidden');
-                });
-            } else {
-                document.getElementById('qrScanModal').classList.add('hidden');
+        function deleteMenu(id) {
+            if (confirm('この練習メニューを削除してもよろしいですか？')) {
+                menuList = menuList.filter(x => x.id !== id);
+                localStorage.setItem('hoop_step_menus', JSON.stringify(menuList));
+                renderMenuList();
+                populateTimerMenuSelect();
+                selectDate(selectedDateStr);
+                showToast('メニューを削除しました');
             }
         }
 
         // --- CALENDAR & LOGS ---
         function renderCalendar() {
+            const grid = document.getElementById('calendarGrid');
+            grid.innerHTML = '';
+
             const year = currentDate.getFullYear();
             const month = currentDate.getMonth();
 
@@ -965,48 +905,32 @@
             const firstDay = new Date(year, month, 1).getDay();
             const lastDate = new Date(year, month + 1, 0).getDate();
 
-            const grid = document.getElementById('calendarGrid');
-            grid.innerHTML = '';
-
-            // Empty cells before month start
             for (let i = 0; i < firstDay; i++) {
-                const empty = document.createElement('div');
-                empty.className = 'h-10 sm:h-12 rounded-xl bg-transparent';
-                grid.appendChild(empty);
+                const emptyCell = document.createElement('div');
+                emptyCell.className = 'h-10';
+                grid.appendChild(emptyCell);
             }
 
-            const todayStr = formatDate(new Date());
+            for (let d = 1; d <= lastDate; d++) {
+                const dateObj = new Date(year, month, d);
+                const dateStr = formatDate(dateObj);
+                const hasLog = dailyLogs[dateStr] && dailyLogs[dateStr].completedMenus && dailyLogs[dateStr].completedMenus.length > 0;
+                const isSelected = dateStr === selectedDateStr;
 
-            for (let day = 1; day <= lastDate; day++) {
-                const dateObj = new Date(year, month, day);
-                const dStr = formatDate(dateObj);
-
-                const cell = document.createElement('button');
-                cell.onclick = () => selectDate(dStr);
-
-                const hasLog = dailyLogs[dStr] && dailyLogs[dStr].completedMenuIds && dailyLogs[dStr].completedMenuIds.length > 0;
-                const isSelected = dStr === selectedDateStr;
-                const isToday = dStr === todayStr;
-
-                let classes = 'h-10 sm:h-12 rounded-xl text-xs font-bold flex flex-col items-center justify-center relative transition border ';
-
+                const btn = document.createElement('button');
+                btn.onclick = () => selectDate(dateStr);
+                
+                let bgClass = 'bg-bbDarkLight hover:bg-gray-700 text-gray-300';
                 if (isSelected) {
-                    classes += 'border-bbOrange bg-bbOrange/20 text-white shadow-md ';
-                } else {
-                    classes += 'border-gray-800 bg-bbDarkLight hover:bg-gray-700 text-gray-300 ';
+                    bgClass = 'bg-bbOrange text-white font-black ring-2 ring-white';
                 }
 
-                if (isToday) {
-                    classes += 'ring-2 ring-bbOrange/50 ';
-                }
-
-                cell.className = classes;
-                cell.innerHTML = `
-                    <span>${day}</span>
-                    ${hasLog ? '<span class="w-2 h-2 rounded-full bg-emerald-400 absolute bottom-1.5"></span>' : ''}
+                btn.className = `h-10 rounded-xl flex flex-col items-center justify-center relative transition text-xs ${bgClass}`;
+                btn.innerHTML = `
+                    <span>${d}</span>
+                    ${hasLog ? '<span class="w-2 h-2 rounded-full bg-bbAccent absolute bottom-1 shadow-sm"></span>' : ''}
                 `;
-
-                grid.appendChild(cell);
+                grid.appendChild(btn);
             }
         }
 
@@ -1015,60 +939,70 @@
             renderCalendar();
         }
 
-        function selectDate(dStr) {
-            selectedDateStr = dStr;
+        function selectDate(dateStr) {
+            selectedDateStr = dateStr;
             renderCalendar();
 
-            document.getElementById('selectedDateLabel').textContent = dStr;
+            const parts = dateStr.split('-');
+            document.getElementById('selectedDateLabel').textContent = `${parts[0]}年${parseInt(parts[1])}月${parseInt(parts[2])}日`;
 
-            const log = dailyLogs[dStr] || { completedMenuIds: [], note: '' };
-            const checklist = document.getElementById('dailyChecklist');
-            checklist.innerHTML = '';
+            const log = dailyLogs[dateStr] || { completedMenus: [], note: '' };
+            const container = document.getElementById('dailyChecklist');
+            container.innerHTML = '';
 
             if (menuList.length === 0) {
-                checklist.innerHTML = '<div class="text-xs text-gray-500 py-2">メニューが未登録です</div>';
+                container.innerHTML = '<p class="text-xs text-gray-500 py-4 text-center">メニューが登録されていません</p>';
             } else {
                 menuList.forEach(m => {
-                    const isChecked = log.completedMenuIds.includes(m.id);
+                    const isChecked = log.completedMenus.includes(m.id);
                     const item = document.createElement('label');
-                    item.className = 'flex items-center gap-3 bg-bbDarkLight p-3 rounded-xl border border-gray-800 cursor-pointer hover:border-gray-700 transition';
+                    item.className = `flex items-center gap-3 p-3 rounded-xl border transition cursor-pointer ${isChecked ? 'bg-bbOrange/10 border-bbOrange/50' : 'bg-bbDarkLight border-gray-800'}`;
                     item.innerHTML = `
-                        <input type="checkbox" value="${m.id}" ${isChecked ? 'checked' : ''} class="log-menu-check w-4 h-4 rounded text-bbOrange focus:ring-0 bg-bbDark border-gray-700">
-                        <span class="text-xs font-bold text-gray-200">${m.title}</span>
+                        <input type="checkbox" value="${m.id}" ${isChecked ? 'checked' : ''} class="w-4 h-4 rounded text-bbOrange focus:ring-0 cursor-pointer">
+                        <div class="flex-1">
+                            <div class="text-sm font-bold text-white">${escapeHtml(m.title)}</div>
+                            <div class="text-xs text-gray-400">${m.steps ? m.steps.length : 0} ステップ</div>
+                        </div>
                     `;
-                    checklist.appendChild(item);
+                    container.appendChild(item);
                 });
             }
 
             document.getElementById('dailyNote').value = log.note || '';
 
-            const statusBadge = document.getElementById('logStatusBadge');
-            if (log.completedMenuIds && log.completedMenuIds.length > 0) {
-                statusBadge.textContent = '完了記録あり';
-                statusBadge.className = 'text-xs px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/30';
+            const badge = document.getElementById('logStatusBadge');
+            if (log.completedMenus && log.completedMenus.length > 0) {
+                badge.className = 'text-xs px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-bold';
+                badge.textContent = `${log.completedMenus.length}個完了`;
             } else {
-                statusBadge.textContent = '未記録';
-                statusBadge.className = 'text-xs px-3 py-1 rounded-full bg-gray-800 text-gray-400 font-bold';
+                badge.className = 'text-xs px-3 py-1 rounded-full bg-gray-800 text-gray-400 font-bold';
+                badge.textContent = '未記録';
             }
         }
 
         function saveDailyLog() {
-            const checkedMenuIds = [];
-            document.querySelectorAll('.log-menu-check:checked').forEach(chk => {
-                checkedMenuIds.push(chk.value);
-            });
-
+            const checkedIds = Array.from(document.querySelectorAll('#dailyChecklist input[type="checkbox"]:checked')).map(cb => cb.value);
             const note = document.getElementById('dailyNote').value.trim();
 
             dailyLogs[selectedDateStr] = {
-                completedMenuIds: checkedMenuIds,
+                completedMenus: checkedIds,
                 note: note
             };
 
             localStorage.setItem('hoop_step_logs', JSON.stringify(dailyLogs));
-            showToast('本日の記録を保存しました');
             renderCalendar();
             selectDate(selectedDateStr);
+            showToast('練習記録を保存しました！');
+        }
+
+        // --- Escape Utility ---
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/&/g, '&amp;')
+                      .replace(/</g, '&lt;')
+                      .replace(/>/g, '&gt;')
+                      .replace(/"/g, '&quot;')
+                      .replace(/'/g, '&#039;');
         }
     </script>
 </body>
